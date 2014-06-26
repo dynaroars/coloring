@@ -1,0 +1,18 @@
+# Using Ant-based Algorithm for Graph Coloring problems
+
+This project uses a heuristic ant-based algorithm for the (classic) Graph Coloring problem and several of its generalizations, namely the Bandwidth Coloring, Multi Coloring, and Bandwidth Multi Coloring problems.
+
+## Details
+
+Code is written in C/C++
+
+You might also be interested in
+
+* **Converter**: convert from Dimacs binary to ascii and vice versa
+* **Benchmark graphs**: [http://www.cs.hbg.psu.edu/benchmarks/graphcoloring.html](http://www.cs.hbg.psu.edu/benchmarks/graphcoloring.html)
+* **Papers**: see these papers in my [publication](http://cs.unm.edu/~tnguyen/) section
+
+1. Bui, T., T. Nguyen, C. Patel, and K. Phan, "An Ant-Based Algorithm for Coloring Graphs," Journal of Discrete Applied Mathematics, Vol. 156(2), 2008, pp. 190 --- 200.
+1. T. Nguyen., M.S. Thesis: "On the Graph Coloring Problem and Its Generalizations," Penn State University, 2006
+1. Bui, T and T. Nguyen, "An Agent-Based Algorithm for Generalized Graph Colorings," Proc. 8th Annual Conference on Genetic and Evolutionary Computation Conference (GECCO), 2006, pp. 19 --- 26
+
