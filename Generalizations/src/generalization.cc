@@ -10,7 +10,7 @@ using namespace std;
 #include "commonUtils.h"
 #include "DimacsAscii.h"
 #include "BMCP2MCPtrans.h"
-#include "tvnFunct.h"
+#include "generalization.h"
 #include "Pheromone.h"
 #include "JOLT.h"
 #include "LocalOpt.h"

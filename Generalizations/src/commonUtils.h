@@ -14,7 +14,7 @@ void printArray(const char *c, const T a[],const int &aSize){
 template<class T>
 void printVector(const char *c, const vector<T>&v){
   if(c!=""){
-	printf("%s: ",c);
+    printf("%s: ",c);
   }
   for(int i = 0 ; i < v.size() ; ++i)cout << v.at(i) << " "; printf("\n");
 }
@@ -24,7 +24,7 @@ template<class T>
 void print2DVector(const char *c, const vector<vector<T> >&v){
   printf("%s:\n",c);
   for(int i = 0 ; i < v.size() ; ++i){
-	printVector("",v.at(i));
+    printVector("",v.at(i));
   }
 }
 
@@ -48,13 +48,13 @@ int chooseColor_RouletteWheel(const vector<double>&score, const double &tSum){
   //  printf("tSum=%f, need= %f\n",tSum,needle);
 
   for (int i = 0 ; i < score.size() ;++i){
-	if (needle-score.at(i) > 0.0){
-	  needle-=score.at(i);
-	}
-	else{
-	  theColor=i;
-	  break;
-	}
+    if (needle-score.at(i) > 0.0){
+      needle-=score.at(i);
+    }
+    else{
+      theColor=i;
+      break;
+    }
   }
 
   //  printf("chosen color is %d\n",theColor);
@@ -69,7 +69,7 @@ bool isConfsSimilar(const vector<int>&confA, const vector<int>&confB){
   if(confA.size()!=confB.size())return false;
 
   for(int i = 0 ;i < confB.size();++i){
-	if(confA.at(i)!=confB.at(i))return false;
+    if(confA.at(i)!=confB.at(i))return false;
   }
 
   return true;
@@ -77,7 +77,7 @@ bool isConfsSimilar(const vector<int>&confA, const vector<int>&confB){
 
 bool isConfsSimilar(const int confA[], const vector<int>&confB){
   for(int i = 0 ;i < confB.size();++i){
-	if(confA[i]!=confB.at(i))return false;
+    if(confA[i]!=confB.at(i))return false;
   }
   return true;
 }
@@ -86,13 +86,13 @@ bool isConfsSimilar(const int confA[], const vector<int>&confB){
 //vector version
 bool isConfExist(const vector<int>&conf ,  const vector<vector<int> >&allConfs){
   if(allConfs.empty()){
-	return false;
+    return false;
   }
   else{
-	for(int i = 0 ; i < allConfs.size();++i){
-	  if(isConfsSimilar(conf,allConfs.at(i)))return true;
-	}
-	return false;
+    for(int i = 0 ; i < allConfs.size();++i){
+      if(isConfsSimilar(conf,allConfs.at(i)))return true;
+    }
+    return false;
   }
 }
 
@@ -100,30 +100,30 @@ bool isConfExist(const vector<int>&conf ,  const vector<vector<int> >&allConfs){
 //array version
 bool isConfExist(const int conf[] ,  const vector<vector<int> >&allConfs){
   if(allConfs.empty()){
-	return false;
+    return false;
   }
   else{
-	for(int i = 0 ; i < allConfs.size();++i){
-	  if(isConfsSimilar(conf,allConfs.at(i)))return true;
-	}
-	return false;
+    for(int i = 0 ; i < allConfs.size();++i){
+      if(isConfsSimilar(conf,allConfs.at(i)))return true;
+    }
+    return false;
   }
 }
 
 
 void appendToAllConfs(const int conf[], const int &confSize ,vector<vector<int> >&allConfs){
   if(!isConfExist(conf,allConfs)){
-	vector<int>newConf;
-	for(int i = 0 ; i < confSize ; ++i){
-	  newConf.push_back(conf[i]);
-	}
-	allConfs.push_back(newConf);
+    vector<int>newConf;
+    for(int i = 0 ; i < confSize ; ++i){
+      newConf.push_back(conf[i]);
+    }
+    allConfs.push_back(newConf);
   }
 }
 
 template<class T>
 void getNonZeroIndices(const vector<T> &inputV, vector<int> &outputV){
   for(int i = 0 ; i < inputV.size(); ++i){
-	if(inputV.at(i))outputV.push_back(i);
+    if(inputV.at(i))outputV.push_back(i);
   }
 }
