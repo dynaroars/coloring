@@ -36,14 +36,3 @@ struct ant{
   vertex *current;
   vertex *old;
 };
-
-/************* GLOBAL ***************/
-time_t seed_t = 0;
-vertex **pVertices;
-vector<ant *> vAnts;
-
-auto BB = false ;//debug option
-
-//results stores here
-vector<int> bestColorResult;
-auto bestResult = -1;

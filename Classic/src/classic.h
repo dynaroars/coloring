@@ -181,29 +181,22 @@ void copyBestResult(const int color[], const int &nVertices){
   }
 }
 
-void initialize(const int &argc, char *argv[],
+int initialize(char const * inputFile,
 		int &nVertices, int &nEdges, int &nAnts,
-		int &bestResult,
 		int &nCycles, int &breakCycles, 
 		int &moveLimit,
 		int &rSizeLimit,
 		int & nRLFSetLimit){
-  //seed
-  if(argc == 3){
-    seed_t = atoi(argv[2]);
-  }else {
-    seed_t = time(0);}
-  srand(seed_t);
-
-  //graph
-  char const * inputFile = argv[1]; 
+  
   //read_graph_DIMACS_ascii(inputFile,nVertices,nEdges);
   readDIMACSBinaryFormat(inputFile, nVertices, nEdges);
-  for(auto i = 0 ; i < nVertices; ++i){
+  for(auto i = 0; i < nVertices; ++i){
     bestColorResult.push_back(i);
   }
-  bestResult = nVertices;
-
+  
+  //initialize data structures
+  initVerticesAndEdges(nVertices, nEdges);
+  
   //other settings
   nCycles = nVertices * nCyclesFactor;
   if(nCycles > 4000) nCycles = 4000;
@@ -234,8 +227,7 @@ void initialize(const int &argc, char *argv[],
     printf("\n*******************\n");
   }
 
-  //initialize data structures
-  initVerticesAndEdges(nVertices, nEdges);
+  return bestColorResult.size();
 }
 
 
@@ -252,7 +244,7 @@ void updateDegreeB(const vector<int> &adj, const bool W[], int degreeB[]){
   }
 }
 
-int getLargestDegreeB(const bool W[], const int degreeB[], const int &nVertices){
+const int getLargestDegreeB(const bool W[], const int degreeB[], const int &nVertices){
   int chosenV=-1, maxDeg=0;
   for(auto i = 0; i < nVertices ;++i){
     if(W[i] && degreeB[i]>maxDeg){
@@ -300,7 +292,8 @@ void markBlackList(const vector<int> &adj, const bool isColored[],
 }
 
 
-int XRLF(int colorAssigned[], const int &nVertices, const int &nEdges,
+void XRLF(int colorAssigned[], int &bestResult,
+	 const int &nVertices, const int &nEdges,
 	 const int &nRLFSetLimit){
 
   bool isColored[nVertices];//stable set
@@ -356,12 +349,6 @@ int XRLF(int colorAssigned[], const int &nVertices, const int &nEdges,
     wSize--; //no longer considered
 
     markW(pVertices[chosenV]->adj, W, wSize);//marked W[adjV] to false 
-
-    //	printf("coloring %d with color %d, total colored %d\n",
-    //		   chosenV,currentColor,howManyColored(W,nVertices));	
-
-    //tvn remove howManyColored() when done 
-    //assert(nVerticesWithThisColored==howManyColored(isColored,nVertices));
 
     while(wSize > 0){
       //mark "UNcolored" adj ones to black list
@@ -422,17 +409,16 @@ int XRLF(int colorAssigned[], const int &nVertices, const int &nEdges,
     }
   }
   
-  int XRLF_Colors = currentColor+1; //since color index starts from 0 ;
+  int XRLF_Colors = currentColor + 1; //since color index starts from 0 ;
 
   //save the best (lowest) colors
   //this won't even need to be check if this function is called 
   //in the first time (since bestNumColor == nVertices init)
+  if(BB) assert(XRLF_Colors <= bestResult);
   if (XRLF_Colors < bestResult){
     bestResult = XRLF_Colors;
     copyBestResult(colorAssigned, nVertices);
   }
-
-  return XRLF_Colors;
 }
 
 void setUpColorClasses(int colorAssigned[],
@@ -753,15 +739,14 @@ void reColorMoreThanQ(int colorTable[], int conflictsTable[],
   updateConflictTable(colorTable,conflictsTable, nVertices);  
 }
 
-
-const int antsOps(int &colorsUsed, int currentColor[],
+const int antsOps(int &bestResult, int currentColor[],
 		  const int &nVertices, const int &nAnts,
 		  const int &nCycles, const int &breakCycles,
 		  const int &moveLimit,
 		  const int &rSizeLimit){
   
   initAnts(nAnts);//add the ants
-  auto alphaNumColors = (int)(colorsUsed*ALPHA);
+  auto alphaNumColors = (int)(bestResult * ALPHA);
   auto bestCycle = 0;
   
   int lg=0;
@@ -773,7 +758,7 @@ const int antsOps(int &colorsUsed, int currentColor[],
 
 #ifdef V
     printf("Q ALPHA is %d, percent %f, XG %d, largest Color Index %d\n",
-	   alphaNumColors,(double)alphaNumColors/(double)colorsUsed,colorsUsed,lg);
+	   alphaNumColors,(double)alphaNumColors/(double)bestResult,bestResult,lg);
 #endif
 
     if(lg==0){
@@ -793,15 +778,12 @@ const int antsOps(int &colorsUsed, int currentColor[],
   int changedCycle=0;
   int moveSoFar;
 
-  for (auto iCycles = 0 ; iCycles < nCycles; ++iCycles) {
+  for (auto iCycles = 0; iCycles < nCycles; ++iCycles) {
     for(auto iAnts = 0; iAnts<nAnts; ++iAnts){
       auto *theAnt = vAnts.at(iAnts);
       moveSoFar = 0;
 
       if(!recentlyVisited.empty())recentlyVisited.clear();//resest
-      //TVN Todo :  there's no probablilty for activation etc ... add this 
-      //there's no factor to reduce exploration and increase exploitation 
-
       //assert(theAnt->current==NULL);
       theAnt->current=pVertices[chooseInitialMoveKA(MOVE_METHOD,
 						    conflictsTable,
@@ -848,7 +830,7 @@ const int antsOps(int &colorsUsed, int currentColor[],
 	     bestResult, iCycles);
 #endif
       
-      if(alphaNumColors>1){
+      if(alphaNumColors > 1){
 	alphaNumColors--;
 #ifdef V
 	printf("Cycle [last changed %d, current %d], "
@@ -867,18 +849,20 @@ const int antsOps(int &colorsUsed, int currentColor[],
 
 
     if (iCycles - changedCycle == Q_CHANGE_CYCLE){
-      int tIncr = (int)(bestResult-alphaNumColors/4);
+      int tIncr = (int)(bestResult- alphaNumColors/4);
 
-      if(tIncr==0||alphaNumColors+tIncr>=bestResult){
-	tIncr=1;
+      if(tIncr==0 || alphaNumColors+tIncr >= bestResult){
+	tIncr = 1;
       }
 	  
       if(alphaNumColors + tIncr < bestResult){
 	alphaNumColors += tIncr;
 	changedCycle = iCycles;
 #ifdef V
-	printf("Cycle [last changed %d, current %d], Q_CHANGE_CYCLE %d, increasing nColors from %d to %d\n",
-	       changedCycle,iCycles,Q_CHANGE_CYCLE,alphaNumColors-tIncr,alphaNumColors);
+	printf("Cycle [last changed %d, current %d], "
+	       "Q_CHANGE_CYCLE %d, increasing nColors from %d to %d\n",
+	       changedCycle, iCycles, Q_CHANGE_CYCLE,
+	       alphaNumColors-tIncr, alphaNumColors);
 #endif
       }
     }
@@ -886,7 +870,7 @@ const int antsOps(int &colorsUsed, int currentColor[],
     if(iCycles - changedCycle == breakCycles){
 #ifdef V
       printf("Break at cycle %d, last changed cycle %d, breakCycle %d\n",
-	     iCycles,changedCycle,breakCycles);
+	     iCycles, changedCycle, breakCycles);
 #endif
       break;
     }
