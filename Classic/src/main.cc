@@ -5,7 +5,7 @@
 #include <cassert>
 using namespace std;
 
-#include "config.h"  //gloval variables etc
+#include "settings.h"  //gloval variables etc
 #include "DimacsBinary.h" //reading DIMACS format
 #include "alg.h"  //main algorithm
 

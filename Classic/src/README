@@ -1,6 +1,0 @@
-Compilation
-$ g++ main.cc -o classic -std=c++11
-
-Usage
-$ ./classic Examples/DSJC125.1.col.b 1
-nthreads: 1 colors: 5 vertices: 125 edges 736 colors_table: () bestIndex: 150 seed: 1

@@ -1,3 +1,0 @@
-- scan all the Todo in code 
-- Graphs format starts from 1, that really is not good since all index now have to start from 1,
-so when done with everything, convert (when read in) all vertex to be -1
