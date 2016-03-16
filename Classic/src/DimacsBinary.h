@@ -8,8 +8,6 @@ the 1/8th of it */
 static char Preamble[MAX_PREAMBLE];
 // end genbin.h code block
 
-
-
 BOOL Bitmap[MAX_NR_VERTICES][MAX_NR_VERTICESdiv8];
 
 // Dimacs graph format translator to and from a binary, more efficient
@@ -100,9 +98,7 @@ void showBitmap(){
    printf("\n\n");
 }
 
-
-
-void readDIMACSBinaryFormat(char *file, int &nVertices, int &nEdges){
+void readDIMACSBinaryFormat(char const *file, int &nVertices, int &nEdges){
   initDimacs();
 
   int i, length = 0;
