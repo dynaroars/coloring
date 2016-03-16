@@ -13,7 +13,6 @@ const auto nBreakCycleFactor = 2.5;
 const auto moveLimitPercent=.25;
 const auto rSizeLimitFactor=3;
 const auto RLFSetPercent = .7 ; 
-const auto XLRF_METHOD = 0 ; //0 = adj density based, vertex w/ largest density chosen for MXRLF
 
 const auto ALPHA = .7 ; 
 const auto BETA = .5 ; 
@@ -40,17 +39,6 @@ struct ant{
 
 /************* GLOBAL ***************/
 time_t seed_t = 0;
-auto nVertices=0;
-auto nEdges=0;
-auto nAnts=0;
-auto nCycles=0;
-auto nJolts=0;
-auto breakCycles=0;
-auto moveLimit=0;
-auto rSizeLimit=0;
-auto nRLFSetLimit=0;
-auto bestCycle=0;
-
 vertex **pVertices;
 vector<ant *> vAnts;
 
