@@ -1,8 +1,24 @@
-#include "everything.h"
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <vector>
+#include <cassert>
+#include <cmath>
+using namespace std;
+#include "MT_rand.h"
+#include "config.h"
+#include "commonUtils.h"
+#include "DimacsAscii.h"
+#include "BMCP2MCPtrans.h"
+#include "tvnFunct.h"
+#include "Pheromone.h"
+#include "JOLT.h"
+#include "LocalOpt.h"
+#include "AntsOps.h"
+
 
 void RW_Test();
 void Confs_Test();
-
 
 int main(int argc, char *argv[]){
 
@@ -48,7 +64,6 @@ int main(int argc, char *argv[]){
 
 // DEBUG AND TESTING CODE ,  NOT IMPORTANT AND NOT USED, ONLY USED WHEN I DEBUG THINGS 
 // I JUST LEAVE THEM HERE JUST IN CASE OF REUSING THEM
-
 
 
 //   Code to test to see if roulette wheel gives answers proportionally to score
