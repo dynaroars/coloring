@@ -3,7 +3,7 @@ void printSeed(const char *c){
   printf("%s : seed %u, %d %d %d\n",c,seed_t,rand(),rand(),rand());
 }
 
-int getDistinctColors(const vector<int>&v){
+int getDistinctColors(const vector<int> &v){
   auto distinctColors = 0;
   vector<int>ColorCount;
   for(auto &x : v){
@@ -34,26 +34,30 @@ int getConflictOfVertex(const vertex *pVertex, const int color[]){
   return nConflicts;
 }
 
-int updateConflictTable(const int color[], int conflict[]){
-  int totalConflicts=0;
+int updateConflictTable(const int color[], int conflict[],
+			const int &nVertices){
+  int totalConflicts = 0;
   for(auto i = 0 ; i < nVertices ; ++i){
-    conflict[i]=getConflictOfVertex(pVertices[i],color);
+    conflict[i] = getConflictOfVertex(pVertices[i],color);
     totalConflicts += conflict[i];
   }
   return totalConflicts;
 }
 
-void cleanUp(){
-  for (auto i = 0; i< nVertices; ++i){delete pVertices[i];} delete pVertices;
-  for (auto i = 0 ; i <vAnts.size(); ++i){delete vAnts.at(i);}
+void cleanUp(const int &nVertices){
+  for (auto i = 0; i < nVertices; ++i){delete pVertices[i];} delete pVertices;
+  for (auto i = 0; i < vAnts.size(); ++i){delete vAnts.at(i);}
 }
 
-void printSol(const bool &write){
+void printSol(const bool &write,
+	      const int &bestResult,
+	      const int &bestCycle,	      
+	      const int &nVertices, const int &nEdges){
   int nthreads=1; //temp value, will be change when doing multi-threads
-  if(BB)assert(getDistinctColors(bestColorResult)==bestResult);
+  if(BB) assert(getDistinctColors(bestColorResult) == bestResult);
   printf("nthreads: %d colors: %d vertices: %d edges %d "
 	 "colors_table: () bestIndex: %d seed: %u\n",
-	 nthreads,bestResult,nVertices,nEdges,bestCycle,seed_t);
+	 nthreads, bestResult, nVertices, nEdges, bestCycle, seed_t);
   
   if (write){//write to file
     const char * solFile = "sol.txt";
@@ -79,7 +83,6 @@ void printSol(const bool &write){
 
 #endif
   }
-
 
 #ifdef V
   printSeed("End");  //print out the seed and some rand for debugging purpose
@@ -171,14 +174,20 @@ void initVerticesAndEdges(const int &nVertices, int &nEdges){
   }
 }
 
-void copyBestResult(const int color[]){
+void copyBestResult(const int color[], const int &nVertices){
   if(BB)assert(bestColorResult.size()==nVertices);
   for(auto i = 0 ; i < nVertices ; ++i){
     bestColorResult.at(i) = color[i];
   }
 }
 
-void initialize(const int &argc, char *argv[]){
+void initialize(const int &argc, char *argv[],
+		int &nVertices, int &nEdges, int &nAnts,
+		int &bestResult,
+		int &nCycles, int &breakCycles, 
+		int &moveLimit,
+		int &rSizeLimit,
+		int & nRLFSetLimit){
   //seed
   if(argc == 3){
     seed_t = atoi(argv[2]);
@@ -199,9 +208,6 @@ void initialize(const int &argc, char *argv[]){
   nCycles = nVertices * nCyclesFactor;
   if(nCycles > 4000) nCycles = 4000;
   
-  nJolts = (int)(nVertices * nJoltPercent);
-  if(nJolts > 300) nJolts = 300;
-  
   nAnts = (int)(nVertices * nAntsPercent);
   if(nAnts > 100) nAnts = 100;
   
@@ -220,7 +226,6 @@ void initialize(const int &argc, char *argv[]){
     printf("*******************\n");
     printf("Graph %s, nVertices %d, nEdges %d\n",inputFile,nVertices,nEdges);
     printf("nCycles %d, ",nCycles);
-    printf("nJolts %d, ",nJolts);
     printf("nAnts %d\n",nAnts);
     printf("breakCycles %d, ",breakCycles);
     printf("moveLimit %d, ",moveLimit);
@@ -247,7 +252,7 @@ void updateDegreeB(const vector<int> &adj, const bool W[], int degreeB[]){
   }
 }
 
-int getLargestDegreeB(const bool W[], const int degreeB[]){
+int getLargestDegreeB(const bool W[], const int degreeB[], const int &nVertices){
   int chosenV=-1, maxDeg=0;
   for(auto i = 0; i < nVertices ;++i){
     if(W[i] && degreeB[i]>maxDeg){
@@ -295,8 +300,8 @@ void markBlackList(const vector<int> &adj, const bool isColored[],
 }
 
 
-
-int XRLF(int colorAssigned[], const int &nVertices, const int &nEdges){
+int XRLF(int colorAssigned[], const int &nVertices, const int &nEdges,
+	 const int &nRLFSetLimit){
 
   bool isColored[nVertices];//stable set
   bool W[nVertices];//uncolored but can be included in stable set
@@ -315,9 +320,7 @@ int XRLF(int colorAssigned[], const int &nVertices, const int &nEdges){
     W[i] = true; //initially all can be included
   }
   
-
-  //temp vals
-  int maxTest, chosenV, vAdjSize;
+  int maxTest, chosenV, vAdjSize;   //temp vals
   while((nVerticesWithThisColored < nVertices) && (wSize > 0)){
     currentColor++; //current color 
     nVerticesWithThisColored=0; //no vertex has this color yet 
@@ -330,18 +333,17 @@ int XRLF(int colorAssigned[], const int &nVertices, const int &nEdges){
     bSize = 0;
     chosenV = -1;   //reset chosen
 
-    if(XLRF_METHOD == 0){
-      maxTest = 0;
-      for(auto i = 0;i<nVertices;++i){
-	if (W[i]){//only check UNcolored and safe vertices
-	  vAdjSize = pVertices[i]->adj.size();
-	  if (maxTest < vAdjSize){
-	    maxTest = vAdjSize;
-	    chosenV = i;
-	  }
+    //adj density based, vertex w/ largest density chosen for MXRLF    
+    maxTest = 0;
+    for(auto i = 0; i < nVertices; ++i){
+      if (W[i]){//only check UNcolored and safe vertices
+	vAdjSize = pVertices[i]->adj.size();
+	if (maxTest < vAdjSize){
+	  maxTest = vAdjSize;
+	  chosenV = i;
 	}
-      }//for (i=0:nVertices)
-    }//if (method ==0)
+      }
+    }
 	
     if(BB) assert(chosenV!=-1);
 
@@ -361,12 +363,12 @@ int XRLF(int colorAssigned[], const int &nVertices, const int &nEdges){
     //tvn remove howManyColored() when done 
     //assert(nVerticesWithThisColored==howManyColored(isColored,nVertices));
 
-    while(wSize>0){
+    while(wSize > 0){
       //mark "UNcolored" adj ones to black list
       markBlackList(pVertices[chosenV]->adj,isColored,B,bSize);
 
 
-      if(nVerticesWithThisColored>nRLFSetLimit){
+      if(nVerticesWithThisColored > nRLFSetLimit){
 	bSize=0;
 	chosenV=-1;//reset
 	for(auto i = 0 ; i < nVertices ; ++i){
@@ -382,11 +384,10 @@ int XRLF(int colorAssigned[], const int &nVertices, const int &nEdges){
 	break; //break out of the loop
 		
       }
-	  
 
       //update degree of B in respect to W
       updateDegreeB(pVertices[chosenV]->adj,W,degreeB);
-      chosenV=getLargestDegreeB(W,degreeB);
+      chosenV = getLargestDegreeB(W,degreeB, nVertices);
 
       colorAssigned[chosenV]=currentColor;//incre then assign color
 
@@ -428,15 +429,16 @@ int XRLF(int colorAssigned[], const int &nVertices, const int &nEdges){
   //in the first time (since bestNumColor == nVertices init)
   if (XRLF_Colors < bestResult){
     bestResult = XRLF_Colors;
-    copyBestResult(colorAssigned);
+    copyBestResult(colorAssigned, nVertices);
   }
 
-  //printSeed("XRLF()");
   return XRLF_Colors;
 }
 
-
-void setUpColorClasses(const int &colorsUsedXRLF, int colorAssigned[], const int colorOrig[]){
+void setUpColorClasses(int colorAssigned[],
+		       const int colorOrig[],
+		       const int &colorsUsedXRLF,
+		       const int &nVertices){
 
   int betaLimit=(int)(colorsUsedXRLF*BETA);
   int vertexRecoloredCounter=0;
@@ -445,11 +447,9 @@ void setUpColorClasses(const int &colorsUsedXRLF, int colorAssigned[], const int
   vector<int>keepColorsV,unkeepColorsV;
   
 
-  for(auto i = 0 ; i < nVertices ;++i){toBeRecolor[i]=true;}
+  for(auto i = 0 ; i < nVertices ;++i) toBeRecolor[i]=true;
   
-  for(int j = 0 ; j< colorsUsedXRLF ;++j){
-    //	if(keepColorsV.size()>betaLimit)break;  //just in case it gets too 'lucky' and goes bizzard 
-
+  for(auto j = 0 ; j< colorsUsedXRLF ;++j){
     if(rand()%1000<=BETA*1000){//if choose to reIndex this color
       keepColorsV.push_back(j);
     }
@@ -491,7 +491,6 @@ void setUpColorClasses(const int &colorsUsedXRLF, int colorAssigned[], const int
     }
   }
 	   
-  
   int lg=0;
   if(BB){
     lg=0;
@@ -514,27 +513,20 @@ void setUpColorClasses(const int &colorsUsedXRLF, int colorAssigned[], const int
     }
   }
 
-  
-
   vertexRecoloredCounter=0; //reset  , can be removed , only for debug purpose
 
 
-  //random color distribution                                                                                          
+  //random color distribution
   int deltaNumColors=(int)(colorsUsedXRLF*DELTA); //limit the numbers to 0:availColor  
+
   //probably I can just pick the colors RANDOMLY
   for(auto i = 0 ; i < nVertices ;++i){
-
     if(toBeRecolor[i]){//if can be colored
-      //tvn todo: get rid of toBeRecolor, just check if colorAssigned==-1 or not
       if(BB)assert(colorAssigned[i]==-1);
-      colorAssigned[i]=rand()%(deltaNumColors); //TVN TO FIX,  just to be consistent w/ KA's  ,  take out -1 later
-
-      vertexRecoloredCounter++;//can be remove later
+      colorAssigned[i]=rand()%(deltaNumColors);
+      vertexRecoloredCounter++;
     }
   }
-
-
-  
 
   lg=0;
   if(BB){
@@ -544,8 +536,11 @@ void setUpColorClasses(const int &colorsUsedXRLF, int colorAssigned[], const int
     }
 
 #ifdef V
-    printf("Q DELTA is %d, percent %f, XG %d, recolored vertices %d, largest Color Index %d\n",
-	   deltaNumColors,(double)deltaNumColors/(double)colorsUsedXRLF,colorsUsedXRLF,vertexRecoloredCounter,lg);
+    printf("Q DELTA is %d, percent %f, XG %d, "
+	   "recolored vertices %d, largest Color Index %d\n",
+	   deltaNumColors,
+	   (double)deltaNumColors/(double)colorsUsedXRLF,
+	   colorsUsedXRLF,vertexRecoloredCounter,lg);
 #endif
 
     if(lg==0){
@@ -554,104 +549,39 @@ void setUpColorClasses(const int &colorsUsedXRLF, int colorAssigned[], const int
       assert(false);
     }
   }
-
-  //  if (BB){
-  //	printf("colorsKeepPercent %g, totalColors %d, totalColorsKept %d, colorRandom %d\n",
-  //		   colorsKeepPercent,colorsUsedXRLF,colorsKeepCounter,availColor);
-  //  }
-
-
 }
 
-int chooseInitialMoveKA(const MoveOpts &MOVE_METHOD, const int conflictTable[]){
+int chooseInitialMoveKA(const MoveOpts &MOVE_METHOD,
+			const int conflictTable[],
+			const int &nVertices){
   int movePos=-1;
 
-  if(MOVE_METHOD==MoveOpts::Random){movePos=rand()%nVertices; }
+  if(MOVE_METHOD == MoveOpts::Random){movePos=rand()%nVertices; }
 
-  if(MOVE_METHOD==MoveOpts::MaxConflict){
-
-    //	assert(false);
+  if(MOVE_METHOD == MoveOpts::MaxConflict){
     movePos=0;
 
     for(int i=1;i<nVertices;++i){
       if(BB)assert(conflictTable[i]!=-1);
 
-
-      if(conflictTable[i]>conflictTable[movePos]){
+      if(conflictTable[i] > conflictTable[movePos]){
 	movePos=i;//tvn todo: what if more than 1 has max conflicts ?
       }
     }//end for
 
-    if(BB){for(auto i = 0 ;  i< nVertices;++i)assert(conflictTable[i]<=conflictTable[movePos]);}
-  }
-  
-
-  return movePos;
-}
-
-
-
-int chooseInitialMove(const int &curPos, const MoveOpts &MOVE_METHOD, const int conflictTable[]){
-  int movePos=-1;
-
-  if(MOVE_METHOD==MoveOpts::Random){
-    do{movePos=rand()%nVertices;
-    }while(movePos==curPos);
-  }
-  if(MOVE_METHOD==MoveOpts::MaxConflict){
-    //movePos=0, if curPos also is 0 , then movePos = 1
-    movePos=(curPos==0)?1:0;
-
-    for(int i=0;i<nVertices;++i){if(BB)assert(conflictTable[i]!=-1);
-	  
-      if(curPos!=i){
-	if(conflictTable[i]>conflictTable[movePos]){
-	  movePos=i;//tvn todo: what if more than 1 has max conflicts ?
-	}
-      }
-	  
-    }//end for
-
-    if(BB){for(auto i = 0 ;  i< nVertices;++i)assert(conflictTable[i]<=conflictTable[movePos]);}
-  }
-  
-  if(BB)assert(movePos!=-1&&movePos!=curPos);
-  return movePos;
-}
-
-
-//move ant to random pos
-int chooseNextMoveRANDOM(const int &curPos){
-  int nextPos=-1;
-  do{
-    nextPos=rand()%nVertices;
-  }while(nextPos==curPos);
-  return nextPos;
-}
-
-//move ant to the most conflicted pos
-vertex *chooseNextMoveHEURISTIC(vertex *curPos, const int conflicts[]){
-
-  int highestConflictIndex=0;
-
-  if(curPos->id==highestConflictIndex){
-    highestConflictIndex=1;
-  }
-
-  for(int i=0;i<nVertices;++i){
-    if(BB)assert(conflicts[i]!=-1);
-    if(conflicts[i]>conflicts[highestConflictIndex]&&curPos!=pVertices[i]){
-      highestConflictIndex=i;//tvn todo: what if more than 1 has max conflicts ?
+    if(BB){
+      for(auto i = 0 ;  i< nVertices;++i)
+	assert(conflictTable[i]<=conflictTable[movePos]);
     }
   }
-	
-  if(BB)assert(highestConflictIndex!=curPos->id);
 
-  return pVertices[highestConflictIndex];
+  return movePos;
 }
 
-void color(const ant* theAnt, const int &maxNColor,
-	   int colorsTable[], int conflictsTable[]){
+void color(const ant* theAnt, 
+	   int colorsTable[], int conflictsTable[],
+	   const int &maxNColor,
+	   const int &nVertices){
   
   //  printf("Max Color %d\n",maxNColor);
 
@@ -695,8 +625,9 @@ void color(const ant* theAnt, const int &maxNColor,
   }
 
   if(leftOver.size()){
-    colorsTable[currPos]=leftOver.at(rand()%leftOver.size());
-    conflictsTable[currPos]=0;
+    colorsTable[currPos] = leftOver.at(rand()%leftOver.size());
+    conflictsTable[currPos] = 0;
+    
     if(BB)assert(getConflictOfVertex(pVertices[currPos],colorsTable)==0);
 
     //assert(oldColor!=colorsTable[currPos]);
@@ -704,8 +635,8 @@ void color(const ant* theAnt, const int &maxNColor,
   else{
     int minCount=colorInAdj[0];
     for(auto i = 1 ; i < maxNColor; ++i){
-      if(colorInAdj[i]<minCount){
-	minCount=colorInAdj[i];
+      if(colorInAdj[i] < minCount){
+	minCount = colorInAdj[i];
       }
     }
 	
@@ -741,14 +672,14 @@ void color(const ant* theAnt, const int &maxNColor,
 
 	
   }
-
 }
 
 //move the ants, very frequently used operation
-int  moveAnt(const int &curPos, const MoveOpts &MOVE_METHOD, 
-	     const vector<int> &recentlyVisited,bool considerVertex[],
-	     const int conflictTable[]){
-
+int move(const int &curPos, const MoveOpts &MOVE_METHOD, 
+	 const vector<int> &recentlyVisited,bool considerVertex[],
+	 const int conflictTable[],
+	 const int &nVertices){
+  
   int movePos=-1;
   vector<int> adjV = pVertices[curPos]->adj;
   vector<int>chosenOne;
@@ -770,7 +701,7 @@ int  moveAnt(const int &curPos, const MoveOpts &MOVE_METHOD,
       //if(BB){if(chosenOne.empty())printf("chosenOne is empty");}
     }
     if(MOVE_METHOD == MoveOpts::MaxConflict){
-      int maxConflict=0;
+      int maxConflict = 0;
       for(auto &x : adjV){
 	if(considerVertex[x] && conflictTable[x] > maxConflict){
 	    maxConflict = conflictTable[x];
@@ -781,7 +712,7 @@ int  moveAnt(const int &curPos, const MoveOpts &MOVE_METHOD,
 	if(BB)assert(chosenOne.empty());
 	
 	for (auto &x : adjV){
-	  if(considerVertex[x] && conflictTable[x]==maxConflict){
+	  if(considerVertex[x] && conflictTable[x] == maxConflict){
 	      chosenOne.push_back(x);
 	  }
 	}
@@ -801,14 +732,17 @@ int  moveAnt(const int &curPos, const MoveOpts &MOVE_METHOD,
 	
   }
 
-  movePos=chosenOne.empty()?adjV.at(rand()%adjV.size()):chosenOne.at(rand()%chosenOne.size());  
+  movePos=chosenOne.empty() ?
+    adjV.at(rand() % adjV.size()) :
+    chosenOne.at(rand() % chosenOne.size());  
 
   if(BB)assert(movePos!=-1);
   return movePos;
 }
 
-
-void reColorMoreThanQ(const int &nColors, int colorTable[], int conflictsTable[]){
+void reColorMoreThanQ(int colorTable[], int conflictsTable[],
+		      const int &nColors,
+		      const int &nVertices){
   if(BB)assert(nColors>0);//if it's 0 then only 1 color
   
   for(auto i = 0; i < nVertices; ++i){
@@ -816,15 +750,20 @@ void reColorMoreThanQ(const int &nColors, int colorTable[], int conflictsTable[]
       colorTable[i] = rand() % nColors;
     }
   }
-  updateConflictTable(colorTable,conflictsTable);  
+  updateConflictTable(colorTable,conflictsTable, nVertices);  
 }
 
 
-void AntsOps(int &colorsUsed, int currentColor[]){
-
+const int antsOps(int &colorsUsed, int currentColor[],
+		  const int &nVertices, const int &nAnts,
+		  const int &nCycles, const int &breakCycles,
+		  const int &moveLimit,
+		  const int &rSizeLimit){
+  
   initAnts(nAnts);//add the ants
   auto alphaNumColors = (int)(colorsUsed*ALPHA);
-
+  auto bestCycle = 0;
+  
   int lg=0;
   if(BB){
     lg=0;
@@ -845,13 +784,11 @@ void AntsOps(int &colorsUsed, int currentColor[]){
   }
 
   int conflictsTable[nVertices];
-  int totalConflicts = updateConflictTable(currentColor,conflictsTable);  
+  int totalConflicts = updateConflictTable(currentColor,conflictsTable, nVertices);  
   //  printf("Total Conflict %d, %d\n",totalConflicts, getTotalConflict(conflictsTable));
-
 
   vector<int> recentlyVisited ;
   bool considerVertices[nVertices];
-
 
   int changedCycle=0;
   int moveSoFar;
@@ -866,57 +803,45 @@ void AntsOps(int &colorsUsed, int currentColor[]){
       //there's no factor to reduce exploration and increase exploitation 
 
       //assert(theAnt->current==NULL);
-
-	  
-      theAnt->current=pVertices[chooseInitialMoveKA(MOVE_METHOD,conflictsTable)];
+      theAnt->current=pVertices[chooseInitialMoveKA(MOVE_METHOD,
+						    conflictsTable,
+						    nVertices)];
       moveSoFar++; if(BB)assert(moveSoFar==1);
-      color(theAnt,alphaNumColors,currentColor,conflictsTable);
+      color(theAnt, currentColor,conflictsTable, alphaNumColors, nVertices);
 
-      while(moveSoFar<moveLimit){ 
+      int movePos;
+      while(moveSoFar < moveLimit){ 
 	if(BB)assert(theAnt->current != nullptr); 
-
-	theAnt->old=theAnt->current;
-		
+	theAnt->old = theAnt->current;
 	for(int distI=0; distI < HOW_FAR; ++distI){
 	  ///move to Max Conflict adj lastly
-	  theAnt->current=pVertices[moveAnt(theAnt->current->id,
-					    (distI==HOW_FAR-1)?MoveOpts::MaxConflict:MoveOpts::Random,
-					    recentlyVisited,considerVertices,conflictsTable)];
+	  movePos = move(theAnt->current->id,
+			 (distI==HOW_FAR-1)?MoveOpts::MaxConflict:MoveOpts::Random,
+			 recentlyVisited,considerVertices,conflictsTable, nVertices);
+	  theAnt->current=pVertices[movePos];
 
 	  //printf("-> [%d] old %d, current %d\n",iAnts,theAnt->old->id,theAnt->current->id);
 
-
-
 	  //if reach maximum then remove from the beginning, todo, use a diff structure
-	  if(recentlyVisited.size()==rSizeLimit)recentlyVisited.erase(recentlyVisited.begin());
+	  if(recentlyVisited.size()== rSizeLimit)
+	    recentlyVisited.erase(recentlyVisited.begin());
 	  recentlyVisited.push_back(theAnt->current->id);  
-
-
 
 	}//HOW_FAR
 
-	color(theAnt, alphaNumColors, currentColor, conflictsTable);
+	color(theAnt, currentColor, conflictsTable, alphaNumColors, nVertices);
 	moveSoFar++;
-
 
       }//while(moveSoFar<moveLimit)
     }//for ant loop
 
 
-    totalConflicts = updateConflictTable(currentColor,conflictsTable);  
+    totalConflicts = updateConflictTable(currentColor, conflictsTable, nVertices);  
 
     if(!totalConflicts && alphaNumColors<bestResult){
-      
-      //		lg=0;
-      //		for(int i=0;i <nVertices ;++i){
-      //		  if(currentColor[i]>lg)lg=currentColor[i];
-      //		}
-      //		printf ("Cycle %d, current color is %d, prev BEST color is %d, nAnts %d, movelimit %d, howFar %d, lg %d\n",
-      //				iCycles,alphaNumColors,bestResult,nAnts,moveLimit,HOW_FAR,lg);
-      
       bestResult=alphaNumColors;
-      copyBestResult(currentColor);
-      bestCycle=iCycles;
+      copyBestResult(currentColor, nVertices);
+      bestCycle = iCycles;
       
 #ifdef V
       printf("*********** Achieve %d colors at cycle %d ************\n",
@@ -931,7 +856,7 @@ void AntsOps(int &colorsUsed, int currentColor[]){
 	       changedCycle,iCycles,Q_CHANGE_CYCLE,alphaNumColors+1,alphaNumColors);
 #endif
 	changedCycle = iCycles;
-	reColorMoreThanQ(alphaNumColors,currentColor,conflictsTable);
+	reColorMoreThanQ(currentColor, conflictsTable, alphaNumColors, nVertices);
 	}
       else{
 	fprintf(stderr,"E: attempting to have only 1 color, "
@@ -966,4 +891,6 @@ void AntsOps(int &colorsUsed, int currentColor[]){
       break;
     }
   }//cycle loop
+
+  return bestCycle;
 }

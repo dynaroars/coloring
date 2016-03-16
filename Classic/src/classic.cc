@@ -7,7 +7,7 @@ using namespace std;
 
 #include "settings.h"  //gloval variables etc
 #include "DimacsBinary.h" //reading DIMACS format
-#include "alg.h"  //main algorithm
+#include "classic.h"
 
 int main(int argc, char *argv[]){
   if (argc < 2) {
@@ -27,22 +27,35 @@ int main(int argc, char *argv[]){
 #endif
   
   //initialize input graphs and other settings
-  initialize(argc, argv);
+  auto nVertices = 0;
+  auto nEdges = 0;
+  auto nAnts = 0;
+  auto nCycles=0;
+  auto breakCycles=0;  
+  auto rSizeLimit=0;
+  auto moveLimit=0;
+  auto nRLFSetLimit=0;
+  initialize(argc, argv, nVertices, nEdges, nAnts,
+	     bestResult,
+	     nCycles, breakCycles, moveLimit,
+	     rSizeLimit, nRLFSetLimit);
   
   //Recursive Largest First with Xconstraint
   int XRLFColor[nVertices];
-  int nColorsXRLF = XRLF(XRLFColor, nVertices, nEdges);
+  int nColorsXRLF = XRLF(XRLFColor, nVertices, nEdges, nRLFSetLimit);
 
   int tempColorAssigned[nVertices];
   for(int i=0;i <nVertices ;++i){tempColorAssigned[i]=-1;}
 
-  setUpColorClasses(nColorsXRLF,tempColorAssigned,XRLFColor);
+  setUpColorClasses(tempColorAssigned, XRLFColor, nColorsXRLF, nVertices);
 
   //Ant Algorithm
-  AntsOps(nColorsXRLF, tempColorAssigned);
+  auto bestCycle = antsOps(nColorsXRLF, tempColorAssigned,
+			   nVertices, nAnts,
+			   nCycles, breakCycles, moveLimit, rSizeLimit);
 
-  printSol(BB==true);
+  printSol(BB==true, bestResult, bestCycle, nVertices, nEdges);
   
-  cleanUp();
+  cleanUp(nVertices);
   return 0; 
 }
