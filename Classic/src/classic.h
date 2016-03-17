@@ -19,24 +19,23 @@ const int getDistinctColors(const vector<int> &v){
   return distinctColors;
 }
 
-void printSol(const bool &write,
-	      const time_t &seed_t,
-	      const Sol &sol,
-	      const int &nEdges){
-  
+void printSol(const Sol &sol,
+	      const time_t &seed_t,	      
+	      const int &nEdges,
+	      const bool &write_to_file){
+
   int nthreads=1; //temp value, will be change when doing multi-threads
   if(BB) assert(getDistinctColors(sol.colors) == sol.nColors);
   printf("nthreads: %d colors: %d vertices: %d edges: %d "
 	 "bestCycle: %d seed: %u\n",
 	 nthreads, sol.nColors, sol.colors.size(), nEdges, sol.iCycle, seed_t);
   
-  if (write){//write to file
+  if (write_to_file){
     const char * solFile = "sol.txt";
     printf("sol written to '%s'\n", solFile);
     fstream os(solFile, ios::out);
-    for(auto &x : sol.colors){
-      //+1  b/c color index starts from 1 instead of 0
-      os << x + 1 << "\n";  
+    for(auto &color : sol.colors){      
+      os << color + 1 << "\n";  //+1  b/c color index starts from 1 instead of 0
     }
   }
 
@@ -260,8 +259,7 @@ void XRLF(Sol &sol, const int &nVertices){
 #ifdef V
 	printf("break out of while loop\n");
 #endif
-	break; //break out of the loop
-		
+	break; //break out of loop
       }
 
       //update degree of B in respect to W
@@ -282,7 +280,7 @@ void XRLF(Sol &sol, const int &nVertices){
 	  
     }//end while(wSize>0)
 	
-    markBlackList(pVertices[chosenV]->adj,isColored,B,bSize);
+    markBlackList(pVertices[chosenV]->adj, isColored, B, bSize);
 	
     wSize = 0;
     for(auto i=0; i < nVertices; ++i){
@@ -306,9 +304,9 @@ void XRLF(Sol &sol, const int &nVertices){
   updateSol(sol, colors, nColors, nVertices, -1);
 }
 
-void setUpColorClasses(int tmp_colors[],
-		       const vector<int> &colors,
-		       const int &nColors){
+vector<int> setUpColorClasses(int tmp_colors[],
+			      const vector<int> &colors,
+			      const int &nColors){
 
   const auto nVertices = colors.size();
   int betaLimit=(int)(nColors*BETA);
@@ -316,10 +314,12 @@ void setUpColorClasses(int tmp_colors[],
   int betaReColorIndex=-1;
   bool toBeRecolor[nVertices];
   vector<int>keepColorsV,unkeepColorsV;
-  
+
+  vector<int>ttmp_colors(nVertices);
   for(auto i = 0 ; i < nVertices ;++i){
     toBeRecolor[i]=true;
     tmp_colors[i] = -1;
+    ttmp_colors.at(i) = -1;
   }
   
   for(auto j = 0 ; j< nColors ;++j){
@@ -357,6 +357,7 @@ void setUpColorClasses(int tmp_colors[],
 	if(BB)assert(toBeRecolor[i]);
 	vertexRecoloredCounter++;
 	tmp_colors[i] = betaReColorIndex;
+	ttmp_colors.at(i) = betaReColorIndex;
 	toBeRecolor[i] = false;
       }
     }
@@ -366,7 +367,7 @@ void setUpColorClasses(int tmp_colors[],
   if(BB){
     lg=0;
     for(int i=0;i <nVertices ;++i){
-      if(tmp_colors[i]>lg)lg=tmp_colors[i];
+      if(tmp_colors[i]>lg) lg=tmp_colors[i];
     }
 
 #ifdef V
@@ -394,7 +395,9 @@ void setUpColorClasses(int tmp_colors[],
   for(auto i = 0 ; i < nVertices ;++i){
     if(toBeRecolor[i]){//if can be colored
       if(BB)assert(tmp_colors[i]==-1);
-      tmp_colors[i]=rand()%(deltaNumColors);
+      auto color = rand()%(deltaNumColors);
+      tmp_colors[i]= color;
+      ttmp_colors.at(i)= color;      
       vertexRecoloredCounter++;
     }
   }
@@ -420,6 +423,7 @@ void setUpColorClasses(int tmp_colors[],
       assert(false);
     }
   }
+  return ttmp_colors;
 }
 
 int selectInitMove(const MoveOpts &MOVE_METHOD,
@@ -625,6 +629,7 @@ void reColorMoreThanQ(int colorTable[], int conflictsTable[],
 
 void antsOps(Sol &sol,
 	     int currentColor[],
+	     vector <int> &cur_colors,
 	     const int &nVertices){
 
   auto nAnts = (int)(nVertices * nAntsPercent);
@@ -676,7 +681,7 @@ void antsOps(Sol &sol,
   }
 
   int conflictsTable[nVertices];
-  int totalConflicts = updateConflictTable(currentColor,conflictsTable, nVertices);  
+  int totalConflicts = updateConflictTable(currentColor, conflictsTable, nVertices);  
   //  printf("Total Conflict %d, %d\n",totalConflicts, getTotalConflict(conflictsTable));
 
   vector<int> recentlyVisited ;
@@ -685,11 +690,9 @@ void antsOps(Sol &sol,
   int changedCycle=0;
   int moveSoFar;
 
-  for (auto iCycles = 0; iCycles < nCycles; ++iCycles) {
-    for(auto iAnts = 0; iAnts<nAnts; ++iAnts){
-      auto *ant = ants.at(iAnts);
+  for (auto iCycle = 0; iCycle < nCycles; ++iCycle) {
+    for(auto &ant : ants){
       moveSoFar = 0;
-
       if(!recentlyVisited.empty())recentlyVisited.clear();//resest
       //assert(ant->current==NULL);
       ant->current=pVertices[selectInitMove(MOVE_METHOD,
@@ -728,11 +731,11 @@ void antsOps(Sol &sol,
     totalConflicts = updateConflictTable(currentColor, conflictsTable, nVertices);  
 
     if(!totalConflicts && alphaNumColors < sol.nColors){
-      updateSol(sol, currentColor, alphaNumColors, nVertices, iCycles);
+      updateSol(sol, currentColor, alphaNumColors, nVertices, iCycle);
       
 #ifdef V
       printf("*********** Achieve %d colors at cycle %d ************\n",
-	     sol.nColors, iCycles);
+	     sol.nColors, iCycle);
 #endif
       
       if(alphaNumColors > 1){
@@ -740,9 +743,9 @@ void antsOps(Sol &sol,
 #ifdef V
 	printf("Cycle [last changed %d, current %d], "
 	       "Q_CHANGE_CYCLE %d, decrease nColors from %d to %d\n",
-	       changedCycle,iCycles,Q_CHANGE_CYCLE,alphaNumColors+1,alphaNumColors);
+	       changedCycle,iCycle,Q_CHANGE_CYCLE,alphaNumColors+1,alphaNumColors);
 #endif
-	changedCycle = iCycles;
+	changedCycle = iCycle;
 	reColorMoreThanQ(currentColor, conflictsTable, alphaNumColors, nVertices);
 	}
       else{
@@ -753,7 +756,7 @@ void antsOps(Sol &sol,
     }//if no conflict and better than best result
 
 
-    if (iCycles - changedCycle == Q_CHANGE_CYCLE){
+    if (iCycle - changedCycle == Q_CHANGE_CYCLE){
       int tIncr = (int)(sol.nColors - alphaNumColors/4);
 
       if(tIncr==0 || alphaNumColors+tIncr >= sol.nColors){
@@ -762,20 +765,20 @@ void antsOps(Sol &sol,
 	  
       if(alphaNumColors + tIncr < sol.nColors){
 	alphaNumColors += tIncr;
-	changedCycle = iCycles;
+	changedCycle = iCycle;
 #ifdef V
 	printf("Cycle [last changed %d, current %d], "
 	       "Q_CHANGE_CYCLE %d, increasing nColors from %d to %d\n",
-	       changedCycle, iCycles, Q_CHANGE_CYCLE,
+	       changedCycle, iCycle, Q_CHANGE_CYCLE,
 	       alphaNumColors-tIncr, alphaNumColors);
 #endif
       }
     }
 
-    if(iCycles - changedCycle == breakCycles){
+    if(iCycle - changedCycle == breakCycles){
 #ifdef V
       printf("Break at cycle %d, last changed cycle %d, breakCycle %d\n",
-	     iCycles, changedCycle, breakCycles);
+	     iCycle, changedCycle, breakCycles);
 #endif
       break;
     }

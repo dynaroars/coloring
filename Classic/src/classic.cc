@@ -44,17 +44,13 @@ int main(int argc, char *argv[]){
   }
   pVertices = initVerticesAndEdges(nVertices, nEdges);
   Sol sol;
-  //Recursive Largest First with Xconstraint
-  XRLF(sol, nVertices);
-
+  XRLF(sol, nVertices); //Recursive Largest First with Xconstraint
   int tmp_colors[nVertices];
-  setUpColorClasses(tmp_colors, sol.colors, sol.nColors);
-
-  //Ant Algorithm
-  antsOps(sol, tmp_colors, nVertices);
-  printSol(BB==true, seed_t, sol, nEdges);  
+  vector<int> ttmp_colors = setUpColorClasses(tmp_colors, sol.colors, sol.nColors);
+  antsOps(sol, tmp_colors, ttmp_colors, nVertices);
+  printSol(sol, seed_t, nEdges, BB==true);  
   
   //cleanup
-  for (auto i = 0; i < nVertices; ++i){delete pVertices[i];} delete pVertices;
+  for(auto i = 0; i < nVertices; ++i){delete pVertices[i];} delete pVertices;
   return 0; 
 }
