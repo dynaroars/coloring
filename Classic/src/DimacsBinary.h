@@ -20,7 +20,6 @@ BOOL Bitmap[MAX_NR_VERTICES][MAX_NR_VERTICESdiv8];
 // masks[i] = pow(2, i);
 char masks[8];
 
-
 void initDimacs(){
   masks[0] = 0x01;
   masks[1] = 0x02;
@@ -31,8 +30,6 @@ void initDimacs(){
   masks[6] = 0x40;
   masks[7] = 0x80;
 }
-
-
 
 int getDIMACSBinaryParams(int &nVertices , int &nEdges)
     /* getting nVertices and Nr_edge from the preamble string, 
@@ -68,24 +65,20 @@ int getDIMACSBinaryParams(int &nVertices , int &nEdges)
   else return 1;
 }
 
-
 /* Same as above except it accepts parameters in any order.  */
 bool getDIMACSBinaryEdgeSwap(int i,  int j){
   int byte, bit;  char mask;
-
   if (i < j)  {
     int t = i;
     i = j;
     j = t;
   }
-
   bit  = 7-(j & 0x00000007);  // bit  = 7 - (j % 8);
   byte = j >> 3;              // byte = j / 8;
   
   mask = masks[bit];
   return( (Bitmap[i][byte] & mask)==mask );
 }
-
 
 
 /* The idea here is to see if the bitmap changes over time. */
@@ -104,10 +97,6 @@ void readDIMACSBinaryFormat(char const *file, int &nVertices, int &nEdges){
   int i, length = 0;
   FILE *fp;
   
-  // SUNS: fp=fopen(file, "r"))   The extra 'b' opens it in binary (untranslated)
-  //                              mode as opposed to text (translated) mode.  See
-  //                              MSDN help for fopen for details.
-
   if ( (fp=fopen(file,"rb"))==NULL )
     { fprintf(stderr,"ERR: Cannot open infile\n"); exit(10);}
 
@@ -123,7 +112,6 @@ void readDIMACSBinaryFormat(char const *file, int &nVertices, int &nEdges){
 
   if (!getDIMACSBinaryParams(nVertices,nEdges))
       { fprintf(stderr,"ERR: Corrupted preamble.\n"); exit(10); }
-
 
   // Load the edge info into Bitmap.
   for ( i = 0 ; i < nVertices && fread(Bitmap[i], 1, (int)((i + 8)/8), fp)  ; i++ );

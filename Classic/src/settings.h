@@ -24,15 +24,15 @@ const auto MOVE_METHOD = MoveOpts::Random;
 const auto Q_CHANGE_CYCLE=20;
 
 /************* DATA TYPE ***************/
-struct vertex{
+struct Vertex{
   int id;
   vector<int> adj;
   vector<int> edgeList;
   int numAnts; 
 };
 
-struct ant{
+struct Ant{
   int id;
-  vertex *current;
-  vertex *old;
+  Vertex *current;
+  Vertex *old;
 };
