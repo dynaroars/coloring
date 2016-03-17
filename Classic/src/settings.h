@@ -28,11 +28,16 @@ struct Vertex{
   int id;
   vector<int> adj;
   vector<int> edgeList;
-  int numAnts; 
 };
 
 struct Ant{
   int id;
   Vertex *current;
   Vertex *old;
+};
+
+struct Sol{
+  vector<int> colors; //color assignments
+  int nColors; //max color  
+  int iCycle; //which cycle achieves these results
 };

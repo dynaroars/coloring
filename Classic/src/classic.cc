@@ -12,9 +12,6 @@ using namespace std;
 /************* GLOBAL ***************/
 Vertex **pVertices;
 auto BB = false ;//debug option
-//results stores here
-vector<int> bestColorResult;
-
 #include "classic.h"
 
 int main(int argc, char *argv[]){
@@ -42,23 +39,20 @@ int main(int argc, char *argv[]){
   auto nVertices = 0, nEdges = 0;
   readDIMACSBinaryFormat(inputFile, nVertices, nEdges);
   if(BB){
-    printf("Graph %s, nVertices %d, nEdges %d\n",inputFile,nVertices,nEdges);
+    printf("Graph %s, nVertices %d, nEdges %d\n",
+	   inputFile, nVertices, nEdges);
   }
-  pVertices = initVerticesAndEdges(nVertices, nEdges);  
-  for(auto i = 0; i < nVertices; ++i) bestColorResult.push_back(i);
-
+  pVertices = initVerticesAndEdges(nVertices, nEdges);
+  Sol sol;
   //Recursive Largest First with Xconstraint
-  int XRLFColor[nVertices];
-  auto bestResult = XRLF(XRLFColor, nVertices, nEdges);
+  XRLF(sol, nVertices);
 
-  int tempColorAssigned[nVertices];
-  for(int i=0; i < nVertices ;++i){tempColorAssigned[i]=-1;}
-
-  setUpColorClasses(tempColorAssigned, XRLFColor, bestResult, nVertices);
+  int tmp_colors[nVertices];
+  setUpColorClasses(tmp_colors, sol.colors, sol.nColors);
 
   //Ant Algorithm
-  auto bestCycle = antsOps(bestResult, tempColorAssigned, nVertices);
-  printSol(BB==true, seed_t, bestResult, bestCycle, nVertices, nEdges);
+  antsOps(sol, tmp_colors, nVertices);
+  printSol(BB==true, seed_t, sol, nEdges);  
   
   //cleanup
   for (auto i = 0; i < nVertices; ++i){delete pVertices[i];} delete pVertices;
