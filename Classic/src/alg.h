@@ -56,7 +56,9 @@ void printSol(const bool &write){
 	 nthreads,bestResult,nVertices,nEdges,bestCycle,seed_t);
   
   if (write){//write to file
-    fstream os("soltest.txt", ios::out);
+    const char * solFile = "sol.txt";
+    printf("sol written to '%s'\n", solFile);
+    fstream os(solFile, ios::out);
 
 #ifndef KA  
     for(auto i = 0; i < nVertices ; ++i){

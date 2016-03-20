@@ -5,10 +5,9 @@
 #include <cassert>
 using namespace std;
 
-#include "config.h"
-#include "DimacsBinary.h"
-//#include "DimacsColor.h"
-#include "alg.h"
+#include "config.h"  //gloval variables etc
+#include "DimacsBinary.h" //reading DIMACS format
+#include "alg.h"  //main algorithm
 
 int main(int argc, char *argv[]){
   if (argc < 2) {
@@ -44,6 +43,6 @@ int main(int argc, char *argv[]){
 
   printSol(BB==true);
   
-  cleanUp();//clean up mem 
+  cleanUp();
   return 0; 
 }

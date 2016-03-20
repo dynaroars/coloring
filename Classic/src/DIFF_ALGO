@@ -1,5 +1,0 @@
-*It is completed based on the ideas of Patel's original project*  I don't think KA did any major change, may be some changes in the parameters to play around etc.  
-
-- Some changes made :
-
-* Increase the Q_CHANGE_CYCLE by 4 times (advantage: allow more time for exploration, avoid premature convergence, disadvantage: the program runs longer)
