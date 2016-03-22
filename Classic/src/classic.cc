@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <vector>
+#include <set>
 #include <cassert>
 #include <algorithm>
 using namespace std;

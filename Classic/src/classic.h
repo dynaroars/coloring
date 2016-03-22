@@ -44,7 +44,6 @@ void printSol(const Sol &sol,
 #endif
 }
 
-
 const int getConflictOfVertex(const Vertex *pVertex, const vector<int> &colors){
   int nConflicts=0;
   for (auto &x : pVertex->adj){
@@ -105,13 +104,10 @@ void updateSol(Sol &sol, const vector<int> &colors, const int &nColors, const in
   sol.iCycle = iCycle;
 }
 
-
 //***** XLRF *****//
 void updateDegreeB(const vector<int> &adj, const bool W[], int degreeB[]){
-  Vertex *tV; //temp vertex
   for(auto &x : adj){
-    tV = pVertices[x];
-    for(auto &y : tV->adj){
+    for(auto &y : pVertices[x]->adj){
       if (W[y]){//if it's uncolored and safe, update its blacklist degree
 	degreeB[y]++;
       }
@@ -122,7 +118,7 @@ void updateDegreeB(const vector<int> &adj, const bool W[], int degreeB[]){
 const int getLargestDegreeB(const bool W[], const int degreeB[], const int &nVertices){
   int chosenV=-1, maxDeg=0;
   for(auto i = 0; i < nVertices ;++i){
-    if(W[i] && degreeB[i]>maxDeg){
+    if(W[i] && degreeB[i] > maxDeg){
 	maxDeg = degreeB[i]; 
 	chosenV = i;
     }
@@ -396,17 +392,18 @@ vector<int> setUpColorClasses(const vector<int> &colors,
   return tmp_colors;
 }
 
-int selectInitMove(const MoveOpts &MOVE_METHOD,
+int selectInitMove(const MoveOpts &move_method,
 		   const int conflictTable[],
 		   const int &nVertices){
   int movePos=-1;
 
-  if(MOVE_METHOD == MoveOpts::Random){movePos=rand()%nVertices; }
+  if(move_method == MoveOpts::Random){
+    movePos = rand()%nVertices;
+  }
+  if(move_method == MoveOpts::MaxConflict){
+    movePos = 0;
 
-  if(MOVE_METHOD == MoveOpts::MaxConflict){
-    movePos=0;
-
-    for(int i=1;i<nVertices;++i){
+    for(auto i = 1;i<nVertices;++i){
       if(BB)assert(conflictTable[i]!=-1);
 
       if(conflictTable[i] > conflictTable[movePos]){
@@ -511,32 +508,32 @@ void color(const Ant *ant,
 }
 
 //move the ants, very frequently used operation
-int move(const int &curPos, const MoveOpts &MOVE_METHOD, 
-	 const vector<int> &recentlyVisited,bool considerVertex[],
+int move(const int &curPos, const MoveOpts &move_method, 
+	 const vector<int> &recentlyVisited,
 	 const int conflictTable[],
 	 const int &nVertices){
   
   int movePos=-1;
   vector<int> adjV = pVertices[curPos]->adj;
   vector<int>chosenOne;
+  bool considerVertex[nVertices];
 
   if(!adjV.empty()){//if it has some adj vertices
+
+    //these 3 loops are fast (so don't try to optimize)
     for(auto i=0 ; i < nVertices ;++i) considerVertex[i] = false;//reset
-    //consider these adj's
     for(auto &x : adjV) considerVertex[x] = true; 
-    //don't considered ones recently visited
     for(auto &x : recentlyVisited) considerVertex[x] = false;
 	
-    if(MOVE_METHOD == MoveOpts::Random){	
+    if(move_method == MoveOpts::Random){	
       for(auto &x : adjV){
 	if(considerVertex[x]){
 	  if(BB) assert(getDIMACSBinaryEdgeSwap(curPos, x));
 	  chosenOne.push_back(x);
 	}
       }
-      //if(BB){if(chosenOne.empty())printf("chosenOne is empty");}
     }
-    if(MOVE_METHOD == MoveOpts::MaxConflict){
+    if(move_method == MoveOpts::MaxConflict){
       int maxConflict = 0;
       for(auto &x : adjV){
 	if(considerVertex[x] && conflictTable[x] > maxConflict){
@@ -552,15 +549,13 @@ int move(const int &curPos, const MoveOpts &MOVE_METHOD,
 	      chosenOne.push_back(x);
 	  }
 	}
-	
 	if(BB)assert(!chosenOne.empty()); 
       }
-	  
     }
   }
-  else{//if this vertex has no adj vertices
-    for(auto i = 0; i < nVertices ;++i) considerVertex[i] = true;//reset
-    //don't considered ones recently visited
+  else{
+    //if has no adj vertices, chose all ones not recently visited
+    for(auto i = 0; i < nVertices ;++i) considerVertex[i] = true;
     for(auto &x : recentlyVisited) considerVertex[x] = false;
     for(auto i = 0; i < nVertices ;++i){
       if(considerVertex[i]) chosenOne.push_back(i);
@@ -575,17 +570,13 @@ int move(const int &curPos, const MoveOpts &MOVE_METHOD,
   return movePos;
 }
 
-void reColorMoreThanQ(vector<int> &colors,
-		      int conflictsTable[],
-		      const int &nColors){
-
+void rand_color(vector<int> &colors, const int &nColors){
   if(BB)assert(nColors>0);//if it's 0 then only 1 color
   for(auto i = 0; i < colors.size(); ++i){
     if(colors.at(i) >= nColors){
       colors.at(i) = rand() % nColors;
     }
   }
-  updateConflictTable(colors, conflictsTable);  
 }
 
 void antsOps(Sol &sol,
@@ -644,15 +635,13 @@ void antsOps(Sol &sol,
   int totalConflicts = updateConflictTable(cur_colors, conflictsTable);  
 
   vector<int> recentlyVisited ;
-  bool considerVertices[nVertices];
-
   int changedCycle=0;
   int moveSoFar;
 
   for (auto iCycle = 0; iCycle < nCycles; ++iCycle) {
     for(auto &ant : ants){
       moveSoFar = 0;
-      if(!recentlyVisited.empty())recentlyVisited.clear();//resest
+      if(!recentlyVisited.empty()) recentlyVisited.clear();
       //assert(ant->current==NULL);
       ant->current=pVertices[selectInitMove(MOVE_METHOD,
 					    conflictsTable,
@@ -668,7 +657,7 @@ void antsOps(Sol &sol,
 	  ///move to Max Conflict adj lastly
 	  movePos = move(ant->current->id,
 			 (distI==HOW_FAR-1)?MoveOpts::MaxConflict:MoveOpts::Random,
-			 recentlyVisited,considerVertices,conflictsTable, nVertices);
+			 recentlyVisited, conflictsTable, nVertices);
 	  ant->current=pVertices[movePos];
 
 	  //printf("-> [%d] old %d, current %d\n",iAnts,ant->old->id,ant->current->id);
@@ -705,7 +694,8 @@ void antsOps(Sol &sol,
 	       changedCycle,iCycle,Q_CHANGE_CYCLE,alphaNumColors+1,alphaNumColors);
 #endif
 	changedCycle = iCycle;
-	reColorMoreThanQ(cur_colors, conflictsTable, alphaNumColors);
+	rand_color(cur_colors, alphaNumColors);
+	updateConflictTable(cur_colors, conflictsTable);  	
 	}
       else{
 	fprintf(stderr,"E: attempting to have only 1 color, "
