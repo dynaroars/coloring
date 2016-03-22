@@ -45,24 +45,22 @@ void printSol(const Sol &sol,
 }
 
 
-const int getConflictOfVertex(const Vertex *pVertex, const int color[]){
+const int getConflictOfVertex(const Vertex *pVertex, const vector<int> &colors){
   int nConflicts=0;
   for (auto &x : pVertex->adj){
     if(BB) assert(pVertices[x]->id == x);
     if(BB) assert(getDIMACSBinaryEdgeSwap(pVertex->id, x));
-
-    if(color[pVertex->id] == color[x]){
+    if(colors.at(pVertex->id) == colors.at(x)){
       nConflicts++;
     }
   }
   return nConflicts;
 }
 
-const int updateConflictTable(const int color[], int conflict[],
-			      const int &nVertices){
+const int updateConflictTable(const vector<int> &colors, int conflict[]){
   int totalConflicts = 0;
-  for(auto i = 0 ; i < nVertices ; ++i){
-    conflict[i] = getConflictOfVertex(pVertices[i], color);
+  for(auto i = 0 ; i < colors.size(); ++i){
+    conflict[i] = getConflictOfVertex(pVertices[i], colors);
     totalConflicts += conflict[i];
   }
   return totalConflicts;
@@ -101,26 +99,7 @@ Vertex **initVerticesAndEdges(const int &nVertices, int &nEdges){
   return vertices;
 }
 
-void updateSol(Sol &sol,
-	       const int color[], 
-	       const int &nColors, const int &nVertices, const int &iCycle){
-  sol.nColors = nColors;
-  if(sol.colors.size() != nVertices){
-    for(auto i = 0; i < nVertices ; ++i)
-      sol.colors.push_back(color[i]);
-  }
-  else{
-    for(auto i = 0; i < nVertices ; ++i)
-      sol.colors.at(i) = color[i];
-  }
-  sol.iCycle = iCycle;
-}
-
-void updateSol(Sol &sol,
-	       const vector<int> &colors,
-	       const int &nColors,
-	       const int &iCycle){
-  
+void updateSol(Sol &sol, const vector<int> &colors, const int &nColors, const int &iCycle){
   sol.nColors = nColors;
   sol.colors = colors;
   sol.iCycle = iCycle;
@@ -188,7 +167,7 @@ void markBlackList(const vector<int> &adj, const bool isColored[],
 }
 
 void XRLF(Sol &sol, const int &nVertices){
-  int colors[nVertices];
+  vector<int> colors (nVertices);
   bool isColored[nVertices];//stable set
   bool W[nVertices];//uncolored but can be included in stable set
   bool B[nVertices];//uncolored but can NO longer belong to stable set
@@ -202,7 +181,7 @@ void XRLF(Sol &sol, const int &nVertices){
   auto nRLFSetLimit = (int)(nVertices * RLFSetPercent);
   
   for(auto i = 0 ; i < nVertices ;++i){
-    colors[i] = -1; 
+    colors.at(i) = -1; 
     isColored[i] = false;
     W[i] = true; //initially all can be included
   }
@@ -233,7 +212,7 @@ void XRLF(Sol &sol, const int &nVertices){
     }
 	
     if(BB) assert(chosenV != -1);
-    colors[chosenV] = currentColor;//incre then assign color
+    colors.at(chosenV) = currentColor;//incre then assign color
     isColored[chosenV] = true;
     nVerticesWithThisColored++;
     W[chosenV]=false;
@@ -266,7 +245,7 @@ void XRLF(Sol &sol, const int &nVertices){
       updateDegreeB(pVertices[chosenV]->adj,W,degreeB);
       chosenV = getLargestDegreeB(W,degreeB, nVertices);
 
-      colors[chosenV] = currentColor;//incre then assign color
+      colors.at(chosenV) = currentColor;//incre then assign color
 
       isColored[chosenV]=true;
       nVerticesWithThisColored++;
@@ -292,20 +271,19 @@ void XRLF(Sol &sol, const int &nVertices){
 
   //save solution
   for(auto i = 0; i < nVertices; ++i){
-    if (colors[i] < 0){//if vertex is uncolored
+    if (colors.at(i) < 0){//if vertex is uncolored
       currentColor++;
-      colors[i] = currentColor;
+      colors.at(i) = currentColor;
       printf("current color %d\n",currentColor);
     }
   }
   
   auto nColors = currentColor + 1; //since color index starts from 0 ;
   auto iCycle = -1; //not in any cycle yet
-  updateSol(sol, colors, nColors, nVertices, -1);
+  updateSol(sol, colors, nColors, -1);
 }
 
-vector<int> setUpColorClasses(int tmp_colors[],
-			      const vector<int> &colors,
+vector<int> setUpColorClasses(const vector<int> &colors,
 			      const int &nColors){
 
   const auto nVertices = colors.size();
@@ -313,21 +291,20 @@ vector<int> setUpColorClasses(int tmp_colors[],
   int vertexRecoloredCounter=0;
   int betaReColorIndex=-1;
   bool toBeRecolor[nVertices];
-  vector<int>keepColorsV,unkeepColorsV;
+  vector<int>keepColorsV, unkeepColorsV;
 
-  vector<int>ttmp_colors(nVertices);
+  vector<int>tmp_colors(nVertices);
   for(auto i = 0 ; i < nVertices ;++i){
     toBeRecolor[i]=true;
-    tmp_colors[i] = -1;
-    ttmp_colors.at(i) = -1;
+    tmp_colors.at(i) = -1;
   }
   
-  for(auto j = 0 ; j< nColors ;++j){
-    if(rand()%1000<=BETA*1000){//if choose to reIndex this color
-      keepColorsV.push_back(j);
+  for(auto i = 0 ; i< nColors; ++i){
+    if(rand() % 1000 <= BETA*1000){
+      keepColorsV.push_back(i);
     }
     else{
-      unkeepColorsV.push_back(j);
+      unkeepColorsV.push_back(i);
     }
   }
 
@@ -335,29 +312,26 @@ vector<int> setUpColorClasses(int tmp_colors[],
   if(BB)assert(keepColorsV.size()+unkeepColorsV.size()==nColors);
 
   while(keepColorsV.size() > betaLimit){
-    int tIndex = rand()%keepColorsV.size();
+    int tIndex = rand() % keepColorsV.size();
     unkeepColorsV.push_back(keepColorsV.at(tIndex));
-    keepColorsV.erase(keepColorsV.begin()+tIndex);
+    keepColorsV.erase(keepColorsV.begin() + tIndex);
   }
   while(keepColorsV.size() + 1 <= betaLimit){
-    int tIndex = rand()%unkeepColorsV.size();
+    int tIndex = rand() % unkeepColorsV.size();
     keepColorsV.push_back(unkeepColorsV.at(tIndex));
-    unkeepColorsV.erase(unkeepColorsV.begin()+tIndex);
+    unkeepColorsV.erase(unkeepColorsV.begin() + tIndex);
   }
 
-  //  printf("after, beta limit %d, keep %d, unkeep %d\n",betaLimit,keepColorsV.size(),unkeepColorsV.size());  
-  if(BB)assert(keepColorsV.size()+unkeepColorsV.size()==nColors);
+  if(BB)assert(keepColorsV.size() + unkeepColorsV.size() == nColors);
 
   //recolor & reindex
   for(auto &x: keepColorsV){
     betaReColorIndex++;
-    for(auto i = 0 ; i < nVertices ;++i){
-      if(colors[i] == x){
-	//printf("choosing color %d==%d, vertex %d\n",j,tmp_colors[i],i);
+    for(auto i = 0 ; i < nVertices;++i){
+      if(colors.at(i) == x){
 	if(BB)assert(toBeRecolor[i]);
 	vertexRecoloredCounter++;
-	tmp_colors[i] = betaReColorIndex;
-	ttmp_colors.at(i) = betaReColorIndex;
+	tmp_colors.at(i) = betaReColorIndex;
 	toBeRecolor[i] = false;
       }
     }
@@ -367,7 +341,7 @@ vector<int> setUpColorClasses(int tmp_colors[],
   if(BB){
     lg=0;
     for(int i=0;i <nVertices ;++i){
-      if(tmp_colors[i]>lg) lg=tmp_colors[i];
+      if(tmp_colors.at(i) > lg) lg = tmp_colors.at(i);
     }
 
 #ifdef V
@@ -386,18 +360,14 @@ vector<int> setUpColorClasses(int tmp_colors[],
   }
 
   vertexRecoloredCounter=0; //reset  , can be removed , only for debug purpose
-
-
   //random color distribution
-  int deltaNumColors=(int)(nColors*DELTA); //limit the numbers to 0:availColor  
+  auto deltaNumColors=(int)(nColors * DELTA); //limit the numbers to 0:availColor  
 
   //probably I can just pick the colors RANDOMLY
   for(auto i = 0 ; i < nVertices ;++i){
     if(toBeRecolor[i]){//if can be colored
-      if(BB)assert(tmp_colors[i]==-1);
-      auto color = rand()%(deltaNumColors);
-      tmp_colors[i]= color;
-      ttmp_colors.at(i)= color;      
+      if(BB)assert(tmp_colors.at(i) == -1);
+      tmp_colors.at(i) = rand() % deltaNumColors;
       vertexRecoloredCounter++;
     }
   }
@@ -405,8 +375,8 @@ vector<int> setUpColorClasses(int tmp_colors[],
   lg=0;
   if(BB){
     lg=0;
-    for(int i=0;i <nVertices ;++i){
-      if(tmp_colors[i]>lg)lg=tmp_colors[i];
+    for(auto i=0; i <nVertices ;++i){
+      if(tmp_colors.at(i) > lg) lg = tmp_colors.at(i);
     }
 
 #ifdef V
@@ -423,7 +393,7 @@ vector<int> setUpColorClasses(int tmp_colors[],
       assert(false);
     }
   }
-  return ttmp_colors;
+  return tmp_colors;
 }
 
 int selectInitMove(const MoveOpts &MOVE_METHOD,
@@ -453,59 +423,53 @@ int selectInitMove(const MoveOpts &MOVE_METHOD,
   return movePos;
 }
 
-void color(const Ant *theAnt, 
-	   int colorsTable[], int conflictsTable[],
+void color(const Ant *ant, 
+	   vector<int> &colors,
+	   int conflictsTable[],
 	   const int &maxNColor,
 	   const int &nVertices){
   
-  //  printf("Max Color %d\n",maxNColor);
-
   auto currPos = -1, oldPos = -1; 
 
-  if(BB)assert(theAnt->current != nullptr);
+  if(BB)assert(ant->current != nullptr);
 
-  if(theAnt->old != nullptr) oldPos=theAnt->old->id;
-  if(theAnt->current != nullptr) currPos=theAnt->current->id;
+  if(ant->old != nullptr) oldPos=ant->old->id;
+  if(ant->current != nullptr) currPos=ant->current->id;
 
-  vector<int> adjV = theAnt->current->adj;
+  vector<int> adjV = ant->current->adj;
   
-  //if(BB)assert(currPos!=oldPos);
-  
-  int oldColor=colorsTable[currPos];
+  int oldColor = colors.at(currPos);
   int colorInAdj[maxNColor];
   for(auto i = 0 ; i < maxNColor; ++i){colorInAdj[i]=0;}
 
   for(auto &x : adjV){
     if(BB){
-      if(colorsTable[x] >= maxNColor){
+      if(colors.at(x) >= maxNColor){
 	printf("color in vertex %d is %d, maxNColor %d\n",
-	       x, colorsTable[x], maxNColor);	  
+	       x, colors.at(x), maxNColor);	  
 	assert(false);
       }
     }
-    colorInAdj[colorsTable[x]]++;
+    colorInAdj[colors.at(x)]++;
   }
 
   //avoid choosing color from old POS
   if(getDIMACSBinaryEdgeSwap(oldPos,currPos)){
-    //printf("Will not choose color %d\n", colorsTable[oldPos]);
-    colorInAdj[colorsTable[oldPos]] = 2 * nVertices;
+    colorInAdj[colors.at(oldPos)] = 2 * nVertices;
   }
 
-
-  vector<int>leftOver;
+  vector<int> leftOver;
   for(auto i = 0 ; i < maxNColor; ++i){
      //if no adj has this color, then push it to leftOver
     if(!colorInAdj[i]) leftOver.push_back(i);
   }
 
   if(leftOver.size()){
-    colorsTable[currPos] = leftOver.at(rand()%leftOver.size());
+    auto color = leftOver.at(rand() % leftOver.size());
+    colors.at(currPos) = color;     
     conflictsTable[currPos] = 0;
     
-    if(BB)assert(getConflictOfVertex(pVertices[currPos],colorsTable)==0);
-
-    //assert(oldColor!=colorsTable[currPos]);
+    if(BB)assert(getConflictOfVertex(pVertices[currPos], colors)==0);
   }
   else{
     int minCount=colorInAdj[0];
@@ -520,18 +484,17 @@ void color(const Ant *theAnt,
     for(auto i = 0 ; i < maxNColor ; ++i){
       if(colorInAdj[i]==minCount)MinIndexVector.push_back(i);
     }
-    colorsTable[currPos]=MinIndexVector.at(rand()%MinIndexVector.size());
-    conflictsTable[currPos]=getConflictOfVertex(pVertices[currPos],colorsTable);
+    auto color = MinIndexVector.at(rand() % MinIndexVector.size());
+    colors.at(currPos) = color;    
+    conflictsTable[currPos] = getConflictOfVertex(pVertices[currPos], colors);
   }
 
-  //  printf("after %d, %d, color %d\n",getConflictOfVertex(pVertices[currPos],colorsTable),getTotalConflict(colorsTable),colorsTable[currPos]);
-
   //update only the conflicts LOCALLY
-  if(colorsTable[currPos]!=oldColor){//if changed the Color
+  if(colors.at(currPos) != oldColor){//if changed the Color
 	
     //decrement since the colors has changed
     for(auto &x : adjV){
-      if(colorsTable[x] == oldColor){
+      if(colors.at(x) == oldColor){
 	conflictsTable[x]--;
       }
     }
@@ -539,13 +502,11 @@ void color(const Ant *theAnt,
     //if there's still conflict, and if they are the same color , incre
     if(conflictsTable[currPos]){//if still conflict  , TVN: not sure if this should be done , doesn't make too much sense
       for(auto &x : adjV){
-	if(colorsTable[x] == colorsTable[currPos]){
+	if(colors.at(x) == colors.at(currPos)){
 	  conflictsTable[x]++;
 	}
       }
     }//if still conflict
-
-	
   }
 }
 
@@ -614,21 +575,20 @@ int move(const int &curPos, const MoveOpts &MOVE_METHOD,
   return movePos;
 }
 
-void reColorMoreThanQ(int colorTable[], int conflictsTable[],
-		      const int &nColors,
-		      const int &nVertices){
+void reColorMoreThanQ(vector<int> &colors,
+		      int conflictsTable[],
+		      const int &nColors){
+
   if(BB)assert(nColors>0);//if it's 0 then only 1 color
-  
-  for(auto i = 0; i < nVertices; ++i){
-    if(colorTable[i] >= nColors){ 
-      colorTable[i] = rand() % nColors;
+  for(auto i = 0; i < colors.size(); ++i){
+    if(colors.at(i) >= nColors){
+      colors.at(i) = rand() % nColors;
     }
   }
-  updateConflictTable(colorTable,conflictsTable, nVertices);  
+  updateConflictTable(colors, conflictsTable);  
 }
 
 void antsOps(Sol &sol,
-	     int currentColor[],
 	     vector <int> &cur_colors,
 	     const int &nVertices){
 
@@ -652,20 +612,20 @@ void antsOps(Sol &sol,
   auto bestCycle = 0;
 
   //add ants
-  vector<Ant *> ants;
+  vector<Ant *> ants(nAnts);
   for(auto i = 0 ; i < nAnts ; ++i){
     auto *ant = new Ant();
     ant->id = i;
     ant->current = nullptr;
     ant->old = nullptr;
-    ants.push_back(ant);
+    ants.at(i) = ant;
   }
     
   int lg=0;
   if(BB){
-    lg=0;
+    lg = 0;
     for(auto i = 0;i < nVertices ;++i){
-      if(currentColor[i]>lg)lg=currentColor[i];
+      if(cur_colors.at(i) > lg)lg = cur_colors.at(i);
     }
 
 #ifdef V
@@ -681,8 +641,7 @@ void antsOps(Sol &sol,
   }
 
   int conflictsTable[nVertices];
-  int totalConflicts = updateConflictTable(currentColor, conflictsTable, nVertices);  
-  //  printf("Total Conflict %d, %d\n",totalConflicts, getTotalConflict(conflictsTable));
+  int totalConflicts = updateConflictTable(cur_colors, conflictsTable);  
 
   vector<int> recentlyVisited ;
   bool considerVertices[nVertices];
@@ -699,7 +658,7 @@ void antsOps(Sol &sol,
 					    conflictsTable,
 					    nVertices)];
       moveSoFar++; if(BB)assert(moveSoFar==1);
-      color(ant, currentColor, conflictsTable, alphaNumColors, nVertices);
+      color(ant, cur_colors, conflictsTable, alphaNumColors, nVertices);
 
       int movePos;
       while(moveSoFar < moveLimit){ 
@@ -721,17 +680,17 @@ void antsOps(Sol &sol,
 
 	}//HOW_FAR
 
-	color(ant, currentColor, conflictsTable, alphaNumColors, nVertices);
+	color(ant, cur_colors, conflictsTable, alphaNumColors, nVertices);
 	moveSoFar++;
 
       }//while(moveSoFar<moveLimit)
     }//for ant loop
 
 
-    totalConflicts = updateConflictTable(currentColor, conflictsTable, nVertices);  
+    totalConflicts = updateConflictTable(cur_colors, conflictsTable);  
 
     if(!totalConflicts && alphaNumColors < sol.nColors){
-      updateSol(sol, currentColor, alphaNumColors, nVertices, iCycle);
+      updateSol(sol, cur_colors, alphaNumColors, iCycle);
       
 #ifdef V
       printf("*********** Achieve %d colors at cycle %d ************\n",
@@ -746,7 +705,7 @@ void antsOps(Sol &sol,
 	       changedCycle,iCycle,Q_CHANGE_CYCLE,alphaNumColors+1,alphaNumColors);
 #endif
 	changedCycle = iCycle;
-	reColorMoreThanQ(currentColor, conflictsTable, alphaNumColors, nVertices);
+	reColorMoreThanQ(cur_colors, conflictsTable, alphaNumColors);
 	}
       else{
 	fprintf(stderr,"E: attempting to have only 1 color, "

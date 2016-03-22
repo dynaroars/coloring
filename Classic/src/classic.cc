@@ -45,9 +45,8 @@ int main(int argc, char *argv[]){
   pVertices = initVerticesAndEdges(nVertices, nEdges);
   Sol sol;
   XRLF(sol, nVertices); //Recursive Largest First with Xconstraint
-  int tmp_colors[nVertices];
-  vector<int> ttmp_colors = setUpColorClasses(tmp_colors, sol.colors, sol.nColors);
-  antsOps(sol, tmp_colors, ttmp_colors, nVertices);
+  vector<int> ttmp_colors = setUpColorClasses(sol.colors, sol.nColors);
+  antsOps(sol, ttmp_colors, nVertices);
   printSol(sol, seed_t, nEdges, BB==true);  
   
   //cleanup
