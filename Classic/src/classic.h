@@ -1,4 +1,3 @@
-//***** Utilities *****//
 void printSeed(const char *c, const time_t &seed_t){
   printf("%s : seed %u, %d %d %d\n",c,seed_t,rand(),rand(),rand());
 }
@@ -63,11 +62,6 @@ const int updateConflictTable(const vector<int> &colors, int conflict[]){
     totalConflicts += conflict[i];
   }
   return totalConflicts;
-}
-
-int compare_degree (const void *v1, const void *v2 ){
-  Vertex *a1 = *(Vertex **)v1;  Vertex *a2 = *(Vertex **)v2;
-  return a2->adj.size() - a1->adj.size();
 }
 
 Vertex **initVerticesAndEdges(const int &nVertices, int &nEdges){
@@ -279,8 +273,7 @@ void XRLF(Sol &sol, const int &nVertices){
   updateSol(sol, colors, nColors, -1);
 }
 
-vector<int> setUpColorClasses(const vector<int> &colors,
-			      const int &nColors){
+vector<int> setUpColorClasses(const vector<int> &colors, const int &nColors){
 
   const auto nVertices = colors.size();
   int betaLimit=(int)(nColors*BETA);
@@ -333,13 +326,8 @@ vector<int> setUpColorClasses(const vector<int> &colors,
     }
   }
 	   
-  int lg=0;
   if(BB){
-    lg=0;
-    for(int i=0;i <nVertices ;++i){
-      if(tmp_colors.at(i) > lg) lg = tmp_colors.at(i);
-    }
-
+    auto lg = *max_element(tmp_colors.begin(), tmp_colors.end());
 #ifdef V
     printf("Q BETA is %d, percent %f, XG %d, "
 	   "recolored vertices %d, largest Color Index %d\n",
@@ -347,12 +335,7 @@ vector<int> setUpColorClasses(const vector<int> &colors,
 	   (double)keepColorsV.size()/(double)nColors,
 	   nColors,vertexRecoloredCounter,lg);
 #endif
-
-    if(lg==0){
-      printf("lg = %d\n",lg);
-      printf("(QColor)largest color index %d\n",lg);
-      assert(false);
-    }
+    assert (lg != 0);
   }
 
   vertexRecoloredCounter=0; //reset  , can be removed , only for debug purpose
@@ -368,12 +351,9 @@ vector<int> setUpColorClasses(const vector<int> &colors,
     }
   }
 
-  lg=0;
+  
   if(BB){
-    lg=0;
-    for(auto i=0; i <nVertices ;++i){
-      if(tmp_colors.at(i) > lg) lg = tmp_colors.at(i);
-    }
+    auto lg = *max_element(tmp_colors.begin(), tmp_colors.end());
 
 #ifdef V
     printf("Q DELTA is %d, percent %f, XG %d, "
@@ -383,12 +363,9 @@ vector<int> setUpColorClasses(const vector<int> &colors,
 	   nColors,vertexRecoloredCounter,lg);
 #endif
 
-    if(lg==0){
-      printf("lg = %d\n",lg);
-      printf("(QColor)largest color index %d\n",lg);
-      assert(false);
-    }
+    assert (lg != 0);
   }
+  
   return tmp_colors;
 }
 
@@ -612,27 +589,19 @@ void antsOps(Sol &sol,
     ants.at(i) = ant;
   }
     
-  int lg=0;
   if(BB){
-    lg = 0;
-    for(auto i = 0;i < nVertices ;++i){
-      if(cur_colors.at(i) > lg)lg = cur_colors.at(i);
-    }
-
+    auto lg = *max_element(cur_colors.begin(), cur_colors.end());
+    
 #ifdef V
     printf("Q ALPHA is %d, percent %f, XG %d, largest Color Index %d\n",
 	   alphaNumColors,(double)alphaNumColors/(double)sol.nColors,sol.nColors,lg);
 #endif
-
-    if(lg==0){
-      printf("lg = %d\n",lg);
-      printf("(QColor)largest color index %d\n",lg);
-      assert(false);
-    }
+    assert (lg != 0);
   }
 
   int conflictsTable[nVertices];
-  int totalConflicts = updateConflictTable(cur_colors, conflictsTable);  
+  updateConflictTable(cur_colors, conflictsTable);  
+  int totalConflicts = -1;
 
   vector<int> recentlyVisited ;
   int changedCycle=0;
@@ -641,12 +610,13 @@ void antsOps(Sol &sol,
   for (auto iCycle = 0; iCycle < nCycles; ++iCycle) {
     for(auto &ant : ants){
       moveSoFar = 0;
-      if(!recentlyVisited.empty()) recentlyVisited.clear();
-      //assert(ant->current==NULL);
-      ant->current=pVertices[selectInitMove(MOVE_METHOD,
-					    conflictsTable,
-					    nVertices)];
-      moveSoFar++; if(BB)assert(moveSoFar==1);
+      if(!recentlyVisited.empty())
+	recentlyVisited.clear();
+
+      auto pos = selectInitMove(MOVE_METHOD, conflictsTable, nVertices);
+      ant->current = pVertices[pos];
+      moveSoFar++;
+      if(BB)assert(moveSoFar==1);
       color(ant, cur_colors, conflictsTable, alphaNumColors, nVertices);
 
       int movePos;
@@ -677,7 +647,6 @@ void antsOps(Sol &sol,
 
 
     totalConflicts = updateConflictTable(cur_colors, conflictsTable);  
-
     if(!totalConflicts && alphaNumColors < sol.nColors){
       updateSol(sol, cur_colors, alphaNumColors, iCycle);
       
