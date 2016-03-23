@@ -10,7 +10,6 @@ using namespace std;
 #include "settings.h"  //gloval variables etc
 
 /************* GLOBAL ***************/
-Vertex **pVertices;
 auto BB = false ;//debug option
 #include "classic.h"
 
@@ -42,11 +41,11 @@ int main(int argc, char *argv[]){
     printf("Graph %s, nVertices %d, nEdges %d\n",
 	   inputFile, nVertices, nEdges);
   }
-  pVertices = initVerticesAndEdges(nVertices, nEdges);
+  Vertex **pVertices = initVerticesAndEdges(nVertices, nEdges);
   Sol sol;
-  XRLF(sol, nVertices); //Recursive Largest First with Xconstraint
+  XRLF(sol, pVertices, nVertices); //Recursive Largest First with Xconstraint
   vector<int> ttmp_colors = setUpColorClasses(sol.colors, sol.nColors);
-  antsOps(sol, ttmp_colors, nVertices);
+  antsOps(sol, ttmp_colors, pVertices, nVertices);
   printSol(sol, seed_t, nEdges, BB==true);  
   
   //cleanup
