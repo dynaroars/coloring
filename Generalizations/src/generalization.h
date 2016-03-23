@@ -93,10 +93,6 @@ bool isConflictAmongAdj(const int &v, const int color[]){
 }
 
 
-
-
-
-
 void printSol(const int bestConfig[],const int &MODE){
 
   int nthreads=1;//temp value, will be change when doing multi-threads
@@ -172,8 +168,6 @@ void initGraph(const int &argc,char *argv[]){
 
   read_graph_DIMACS_ascii(inputFile,nVertices,nEdges,edgeMatrix,weightMatrix,ku);
   
-
-
   if(PTYPE==GCP||PTYPE==MCP){//ignore weight matrix, weight = 1
     for(int i =  0 ;  i < weightMatrix.size() ; ++i){
       for(int j = 0 ; j < weightMatrix.at(i).size();++j){

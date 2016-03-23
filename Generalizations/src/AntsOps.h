@@ -560,14 +560,6 @@ void AntsOps(int tempConfigA[], int bestConfigA[]){
       }
     }
 
-    //if no improvement for a JOLT_CYCLES of time
-    //	if(iCycles-changedCycle==joltCycles){
-    //	  printf("jolt at cycle %d, last changed cycle %d, joltCycles %d, alphaMaxK %d\n",iCycles,changedCycle,joltCycles,alphaMaxK);
-    //	  jolt(tempConfigA,10,alphaMaxK);
-    //	}
-	
-
-
     //if no improvement for a BREAK_CYCLES of time
     if(iCycles-changedCycle==breakCycles){
       if(BB)printf("Break at cycle %d, last changed cycle %d, breakCycle %d\n",iCycles,changedCycle,breakCycles);

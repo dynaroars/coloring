@@ -71,10 +71,6 @@ void addScore(const int &confMaxK,const double &score,const int config[]){
 
 }
 
-
-
-
-
 //NOTE IMPORTANT:  have to check to make sure not ADDING similar 
 //configs !!!
 void addPheromoneScore(const int &confMaxK, const int &confTotalConflicts,

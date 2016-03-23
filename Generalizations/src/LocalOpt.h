@@ -47,8 +47,6 @@ int chooseV(const int color[], const int inColor[],const int &OPTION){
   return chosenV;
 }
 
-
-
 void getIG(int colorV[],const int &nVertices, const int &nEdges){
 
 

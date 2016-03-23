@@ -6,7 +6,7 @@
 #include <cmath>
 using namespace std;
 #include "MT_rand.h"
-#include "config.h"
+#include "settings.h"
 #include "commonUtils.h"
 #include "DimacsAscii.h"
 #include "BMCP2MCPtrans.h"

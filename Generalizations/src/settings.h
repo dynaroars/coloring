@@ -80,27 +80,13 @@ vector<int>distinctColorsV;
 
 int bestResult=-1;
 
-
-
 vector<vector<int> >weightMatrix;
 vector<vector<bool> >edgeMatrix;
 vector<int>ku;
-
-
 
 //store the maxK obtained from intial greedy, this will be the based 
 //for scoring, i.e., all later configs with maxK_prime will have score 
 //initScore_MaxK / maxK_prime  ....  that is , the lower the maxK_prime
 //the higher the score.
 int baseScore_MaxK=0; 
-
-
-
 vector<vector<int> >allConfs;
-
-
-
-
-
-
-
