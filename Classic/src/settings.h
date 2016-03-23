@@ -34,10 +34,16 @@ struct Ant{
   int id;
   Vertex *current;
   Vertex *old;
+  
+  Ant(const int mid = -1, Vertex *mcurrent = nullptr, Vertex *mold =nullptr)
+  : id(mid), current(mcurrent), old(mold) {}
 };
 
 struct Sol{
   vector<int> colors; //color assignments
   int nColors; //max color  
   int iCycle; //which cycle achieves these results
+
+  Sol(vector<int> mcolors, int mnColors, int miCycle)
+  :colors(mcolors), nColors(mnColors), iCycle(miCycle) {}
 };
