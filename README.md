@@ -4,9 +4,6 @@ This project uses a heuristic ant-based algorithm for the (classic) Graph Colori
 
 Code is written in C/C++ and released under the BSD license.
 
-## Instructions
-Clone the code `hg clone ssh://hg@bitbucket.org/nguyenthanhvuh/coloring`
-
 ### Classic Graph Coloring
 
 ```
