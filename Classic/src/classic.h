@@ -1,5 +1,5 @@
 void printSeed(const char *c, const time_t &seed_t){
-  printf("%s : seed %u, %d %d %d\n",c,seed_t,rand(),rand(),rand());
+  printf("%s : seed %ld, %d %d %d\n",c,seed_t,rand(),rand(),rand());
 }
 
 const int getDistinctColors(const vector<int> &v){
@@ -25,8 +25,8 @@ void printSol(const Sol &sol,
 
   int nthreads = 1; //temp value, will be change when doing multi-threads
   if(BB) assert(getDistinctColors(sol.colors) == sol.nColors);
-  printf("nthreads: %d colors: %d vertices: %d edges: %d "
-	 "bestCycle: %d seed: %u\n",
+  printf("nthreads: %d colors: %d vertices: %zu edges: %d "
+	 "bestCycle: %d seed: %ld\n",
 	 nthreads, sol.nColors, sol.colors.size(), nEdges, sol.iCycle, seed_t);
   
   if (write_to_file){
