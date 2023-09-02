@@ -4,7 +4,7 @@
 
 Code is written in C/C++ and released under the BSD license.
 
-### Classic Graph Coloring
+## Classic Graph Coloring
 
 ```
 #!shell
@@ -22,9 +22,10 @@ In the above example, `../examples/DSJC125.1.col.b` is the input graph in DIMACS
 You might also be interested in
 
 * **Converter**: convert from Dimacs binary to ascii and vice versa
-* **Benchmark graphs**: [http://www.cs.hbg.psu.edu/benchmarks/graphcoloring.html](http://www.cs.hbg.psu.edu/benchmarks/graphcoloring.html)
+* **Benchmark graphs**: [https://github.com/dynaroars/npbench/](https://github.com/dynaroars/npbench/)
 * **Papers**: 
 
+## Publications
 1. Bui, T., T. Nguyen, C. Patel, and K. Phan, "An Ant-Based Algorithm for Coloring Graphs," Journal of Discrete Applied Mathematics, Vol. 156(2), 2008, pp. 190 --- 200.
 1. T. Nguyen., M.S. Thesis: "On the Graph Coloring Problem and Its Generalizations," Penn State University, 2006
 1. Bui, T and T. Nguyen, "An Agent-Based Algorithm for Generalized Graph Colorings," Proc. 8th Annual Conference on Genetic and Evolutionary Computation Conference (GECCO), 2006, pp. 19 --- 26
