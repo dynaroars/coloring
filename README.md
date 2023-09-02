@@ -1,19 +1,17 @@
 # Using Ant-based Algorithm for Graph Coloring problems
 
-**AntColor** is tool that implements a heuristic ant-based algorithm for the (classic) Graph Coloring problem and several popular generalizations (the Bandwidth Coloring, Multi Coloring, and Bandwidth Multi Coloring problems).
+**AntColor** is tool that implements an efficient, heuristic ant-based algorithm for the (classical) Graph Coloring problem. **AntColor** also supports several popular generalizations, namely the Bandwidth Coloring, Multi Coloring, and Bandwidth Multi Coloring problems.
 
-Code is written in C/C++ and released under the BSD license.
+Code is written in C/C++ and released under the MIT license.
 
 ## Classic Graph Coloring
 
 ```
-#!shell
 $ cd Classic/src
 $ g++ classic.cc -std=c++11  -o classic
 $ ./classic ../examples/DSJC125.1.col.b 1  #optional -D DB : turn on debugging and output sol to sol.txt
 nthreads: 1 colors: 5 vertices: 125 edges: 736 bestCycle: 160 seed: 1
 ```
-
 
 In the above example, `../examples/DSJC125.1.col.b` is the input graph in DIMACS *binary* format, and the [optional] integer `1` is the seed. The result `colors: 5` indicates this graph can be colored using 5 colors.
 
@@ -21,8 +19,8 @@ In the above example, `../examples/DSJC125.1.col.b` is the input graph in DIMACS
 ## MISCS
 You might also be interested in
 
-* **Converter**: convert from Dimacs binary to ascii and vice versa
 * **Benchmark graphs**: [https://github.com/dynaroars/npbench/](https://github.com/dynaroars/npbench/)
+* **[Converter](https://github.com/dynaroars/npbench/tree/master/instances/converter)**: convert from DIMACS binary to ASCII and vice versa
 
 ## Publications
 1. Bui, T., T. Nguyen, C. Patel, and K. Phan, "An Ant-Based Algorithm for Coloring Graphs," Journal of Discrete Applied Mathematics, Vol. 156(2), 2008, pp. 190 --- 200.
