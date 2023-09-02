@@ -9,7 +9,7 @@ Code is written in C/C++ and released under the BSD license.
 ```
 #!shell
 $ cd Classic/src
-$ g++ main.cc -std=c++11  -o classic
+$ g++ classic.cc -std=c++11  -o classic
 $ ./classic ../examples/DSJC125.1.col.b 1  #optional -D DB : turn on debugging and output sol to sol.txt
 nthreads: 1 colors: 5 vertices: 125 edges: 736 bestCycle: 160 seed: 1
 ```
