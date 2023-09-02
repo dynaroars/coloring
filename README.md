@@ -23,7 +23,6 @@ You might also be interested in
 
 * **Converter**: convert from Dimacs binary to ascii and vice versa
 * **Benchmark graphs**: [https://github.com/dynaroars/npbench/](https://github.com/dynaroars/npbench/)
-* **Papers**: 
 
 ## Publications
 1. Bui, T., T. Nguyen, C. Patel, and K. Phan, "An Ant-Based Algorithm for Coloring Graphs," Journal of Discrete Applied Mathematics, Vol. 156(2), 2008, pp. 190 --- 200.
