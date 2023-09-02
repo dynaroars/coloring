@@ -1,6 +1,6 @@
 # Using Ant-based Algorithm for Graph Coloring problems
 
-This project uses a heuristic ant-based algorithm for the (classic) Graph Coloring problem and several of its generalizations, namely the Bandwidth Coloring, Multi Coloring, and Bandwidth Multi Coloring problems.
+**AntColor** is tool that implements a heuristic ant-based algorithm for the (classic) Graph Coloring problem and several popular generalizations (the Bandwidth Coloring, Multi Coloring, and Bandwidth Multi Coloring problems).
 
 Code is written in C/C++ and released under the BSD license.
 
